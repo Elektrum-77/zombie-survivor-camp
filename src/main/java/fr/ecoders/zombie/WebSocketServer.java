@@ -93,6 +93,8 @@ public class WebSocketServer {
     }
   }
 
+  @RunOnVirtualThread
+  @Blocking
   @OnTextMessage
   public void onMessage(Command cmd) {
     var username = username();
@@ -129,6 +131,8 @@ public class WebSocketServer {
     }
   }
 
+  @RunOnVirtualThread
+  @Blocking
   @OnClose
   public void onClose() {
     var username = username();

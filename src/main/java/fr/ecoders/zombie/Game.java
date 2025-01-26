@@ -9,21 +9,28 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public final class Game {
-  private final HashMap<String, Camp> camps = new HashMap<>();
+  private final HashMap<String, Camp> camps;
   private final HashMap<String, PlayerHandler> activeHandlers;
   private final Stack stack;
 
-  private Game(Map<String, PlayerHandler> activeHandlers, List<Card> cards) {
+  private Game(Map<String, Camp> camps, Map<String, PlayerHandler> activeHandlers, List<Card> cards) {
+    this.camps = new HashMap<>(Map.copyOf(camps));
     this.stack = new Stack(List.copyOf(cards));
-    this.activeHandlers = new HashMap<>(activeHandlers);
+    this.activeHandlers = new HashMap<>(Map.copyOf(activeHandlers));
   }
 
   static void start(Map<String, PlayerHandler> handlers) throws InterruptedException {
-    var game = new Game(Map.copyOf(handlers), CARDS);
+    var camps = handlers.keySet()
+      .stream()
+      .collect(Collectors.toUnmodifiableMap(
+        Function.identity(),
+        n -> new Camp(6, List.of(), List.of())));
+    var game = new Game(camps, Map.copyOf(handlers), CARDS);
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
       while (!game.isFinished()) {
@@ -59,7 +66,7 @@ public final class Game {
   }
 
   private GameState gameState(String player) {
-    return new GameState(Map.of(), stack.draw(3), player);
+    return new GameState(camps, stack.draw(3), player);
   }
 
   public void updateCamp(String player, UnaryOperator<Camp> updater) {
