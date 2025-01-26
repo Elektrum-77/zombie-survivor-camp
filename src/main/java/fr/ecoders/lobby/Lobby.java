@@ -22,6 +22,13 @@ public final class Lobby {
     return List.copyOf(players);
   }
 
+  public boolean isReady(String player) {
+    if (!players.contains(player)) {
+      throw new IllegalStateException("Unknown player " + player);
+    }
+    return ready.contains(player);
+  }
+
   public boolean isEveryoneReady() {
     return ready.size() == players.size();
   }

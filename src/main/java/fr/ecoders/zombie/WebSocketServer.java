@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.SynchronousQueue;
+import static java.util.function.Predicate.not;
 import java.util.stream.Collectors;
 
 @WebSocket(path = "game/{username}")
@@ -82,11 +83,24 @@ public class WebSocketServer {
   public void onOpen() {
     var username = username();
     synchronized (lock) {
+      if (isStarted) {
+        connection.closeAndAwait();
+        return;
+      }
       if (!lobby.connect(username)) {
         connection.sendTextAndAwait("NAME_ALREADY_USED");
         connection.closeAndAwait();
         return;
       }
+      // send already connected players to this player
+      var players = lobby.players()
+          .stream()
+          .filter(not(username::equals))
+          .map(p -> new Event.ConnectedPlayerList.Player(p, lobby.isReady(p)))
+          .toList();
+      connection.sendTextAndAwait(new Event.ConnectedPlayerList(players));
+
+      // register user's info
       var u = connection.userData();
       u.put(ACTION_QUEUE_KEY, new SynchronousQueue<>());
       u.put(USERNAME_KEY, username);
@@ -171,6 +185,12 @@ public class WebSocketServer {
     record LobbyEvent(
       String player,
       Lobby.PlayerState state) implements Event {
+    }
+
+    record ConnectedPlayerList(List<Player> players) implements Event {
+      record Player(
+        String username,
+        boolean isReady) {}
     }
 
     record GameStateWrapper(GameState state) implements Event {}
