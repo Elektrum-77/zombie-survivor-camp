@@ -1,11 +1,24 @@
 package fr.ecoders.zombie;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.summingInt;
+import java.util.stream.Stream;
 
 public record ResourceBank(Map<Resource, Integer> resources) {
   public ResourceBank {
     resources = Map.copyOf(resources);
+  }
+
+  public static ResourceBank sumAll(Stream<ResourceBank> banks) {
+    var resources = banks.filter(Objects::nonNull)
+      .map(b -> b.resources.entrySet())
+      .flatMap(Collection::stream)
+      .collect(groupingBy(Map.Entry::getKey, summingInt(Map.Entry::getValue)));
+    return new ResourceBank(resources);
   }
 
   public ResourceBank add(Resource resource, int amount) {

@@ -95,13 +95,23 @@ public sealed interface Card {
       new ResourceBank(Map.of(MATERIALS, 1, FUEL, 1, MILITARY, 1)))
   );
 
+  sealed interface Searchable extends Card {
+    ResourceBank search();
+  }
+
+  sealed interface Buildable extends Card {
+    ResourceBank cost();
+
+    ResourceBank production();
+  }
+
 
   record Building(
     String name,
     ResourceBank cost,
     ResourceBank production,
     ResourceBank search
-  ) implements Card {
+  ) implements Searchable, Buildable {
     public Building {
       Objects.requireNonNull(name);
       Objects.requireNonNull(cost);

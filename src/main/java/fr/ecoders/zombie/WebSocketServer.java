@@ -60,7 +60,7 @@ public class WebSocketServer {
               .get(ACTION_QUEUE_KEY);
             return (gs) -> {
               c.sendTextAndAwait(new Event.GameStateWrapper(gs));
-              return queue.take();
+              return Action.withGuard(gs, queue.take());
             };
           }));
       isStarted = true;

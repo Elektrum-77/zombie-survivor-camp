@@ -4,11 +4,16 @@ import static fr.ecoders.zombie.Card.CARDS;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public final class Game {
+  private final HashMap<String, Camp> camps = new HashMap<>();
   private final HashMap<String, PlayerHandler> activeHandlers;
   private final Stack stack;
 
@@ -30,17 +35,20 @@ public final class Game {
           .collect(Collectors.toUnmodifiableMap(
             Map.Entry::getKey,
             e -> {
+              var name = e.getKey();
               var handler = e.getValue();
-              return executor.submit(() -> handler.askAction(game.gameState()));
+              return AskAction.asking(handler, game.gameState(name), executor);
             }));
 
         // apply all actions
         for (var e : futures.entrySet()) {
           var username = e.getKey();
           try {
-            var future = e.getValue();
-            var action = future.get();
-            action.play(game);
+            var asking = e.getValue();
+            var answer = asking.answer();
+            var gameState = asking.gameState();
+            var action = answer.get();
+            action.play(game, gameState.hand(), username);
           } catch (ExecutionException ex) {
             game.activeHandlers.remove(username);
             throw new AssertionError("An error occurred while waiting for a player's action", ex);
@@ -50,8 +58,31 @@ public final class Game {
     }
   }
 
-  private GameState gameState() {
-    return new GameState(Map.of(), stack.draw(3));
+  private GameState gameState(String player) {
+    return new GameState(Map.of(), stack.draw(3), player);
+  }
+
+  public void updateCamp(String player, UnaryOperator<Camp> updater) {
+    Objects.requireNonNull(player);
+    Objects.requireNonNull(updater);
+    if (!camps.containsKey(player)) {
+      throw new IllegalArgumentException("Player " + player + " does not exist");
+    }
+    var camp = camps.get(player);
+    camps.replace(player, updater.apply(camp));
+  }
+
+  public void discardAll(List<Card> cards) {
+    List.copyOf(cards);
+    stack.discardAll(cards);
+  }
+
+  private record AskAction(
+    GameState gameState,
+    Future<Action> answer) {
+    private static AskAction asking(PlayerHandler handler, GameState gameState, ExecutorService executor) {
+      return new AskAction(gameState, executor.submit(() -> handler.askAction(gameState)));
+    }
   }
 
   private Map<String, PlayerHandler> activeHandlers() {

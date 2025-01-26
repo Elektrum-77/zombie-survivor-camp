@@ -1,4 +1,46 @@
 package fr.ecoders.zombie;
 
-public record Camp(ResourceBank production) {
+import fr.ecoders.zombie.Card.Buildable;
+import fr.ecoders.zombie.Card.Searchable;
+import static fr.ecoders.zombie.ResourceBank.Resource.PEOPLE;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+public record Camp(
+  int maxBuildCount,
+  List<Buildable> buildings,
+  List<Searchable> searches) {
+  public static final ResourceBank SEARCH_COST = new ResourceBank(Map.of(PEOPLE, 1));
+
+  ResourceBank production() {
+    var searchCost = Stream.of(SEARCH_COST.multiply(searches().size()));
+    var production = buildings.stream()
+      .map(Buildable::production);
+    return ResourceBank.sumAll(Stream.of(searchCost, production)
+      .flatMap(Function.identity()));
+  }
+
+  Camp construct(Buildable buildable) {
+    if (!production().containsAll(buildable.cost())) {
+      throw new IllegalArgumentException("Not enough materials to construct " + buildable);
+    }
+    if (this.buildings.size() >= maxBuildCount) {
+      throw new IllegalArgumentException("Too many buildings");
+    }
+    var buildings = new ArrayList<>(this.buildings);
+    buildings.add(buildable);
+    return new Camp(maxBuildCount, buildings, searches);
+  }
+
+  Camp search(Searchable searchable) {
+    if (!production().containsAll(SEARCH_COST)) {
+      throw new IllegalArgumentException("Not enough materials to search " + searchable);
+    }
+    var searches = new ArrayList<>(this.searches);
+    searches.add(searchable);
+    return new Camp(maxBuildCount, buildings, searches);
+  }
 }
