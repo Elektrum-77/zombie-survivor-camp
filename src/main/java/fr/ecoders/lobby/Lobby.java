@@ -2,27 +2,18 @@ package fr.ecoders.lobby;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.Objects;
 
 public final class Lobby {
   private final HashSet<String> players = new HashSet<>();
   private final HashSet<String> ready = new HashSet<>();
-  private final BiConsumer<? super String, ? super PlayerState> onUpdate;
-
-  public Lobby(BiConsumer<? super String, ? super PlayerState> onUpdate) {
-    this.onUpdate = onUpdate;
-  }
-
-  public void disconnect(String username) {
-    players.remove(username);
-    onUpdate.accept(username, PlayerState.DISCONNECT);
-  }
 
   public List<String> players() {
     return List.copyOf(players);
   }
 
   public boolean isReady(String player) {
+    Objects.requireNonNull(player);
     if (!players.contains(player)) {
       throw new IllegalStateException("Unknown player " + player);
     }
@@ -33,39 +24,27 @@ public final class Lobby {
     return ready.size() == players.size();
   }
 
-  /// returns false if a user already uses this username
+  /// returns false if this username is already used
   public boolean connect(String username) {
-    if (players.add(username)) {
-      onUpdate.accept(username, PlayerState.CONNECT);
-      return true;
-    }
-    return false;
+    return players.add(username);
   }
 
-  public void ready(String username) {
+  public void disconnect(String username) {
+    players.remove(username);
+  }
+
+
+  public boolean ready(String username) {
     if (!players.contains(username)) {
       throw new IllegalArgumentException("Player " + username + " does not exist");
     }
-    if (ready.add(username)) {
-      onUpdate.accept(username, PlayerState.READY);
-    }
+    return ready.add(username);
   }
 
-  public void unready(String username) {
+  public boolean unready(String username) {
     if (!players.contains(username)) {
       throw new IllegalArgumentException("Player " + username + " does not exist");
     }
-    if (ready.remove(username)) {
-      onUpdate.accept(username, PlayerState.UNREADY);
-    }
+    return ready.remove(username);
   }
-
-  public enum PlayerState {
-    CONNECT,
-    READY,
-    UNREADY,
-    DISCONNECT
-  }
-
-
 }

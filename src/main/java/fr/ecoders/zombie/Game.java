@@ -9,28 +9,32 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public final class Game {
   private final HashMap<String, Camp> camps;
-  private final HashMap<String, PlayerHandler> activeHandlers;
+  private final HashMap<String, Player.Handler> activeHandlers;
   private final Stack stack;
 
-  private Game(Map<String, Camp> camps, Map<String, PlayerHandler> activeHandlers, List<Card> cards) {
-    this.camps = new HashMap<>(Map.copyOf(camps));
-    this.stack = new Stack(List.copyOf(cards));
-    this.activeHandlers = new HashMap<>(Map.copyOf(activeHandlers));
+  private Game(HashMap<String, Camp> camps, HashMap<String, Player.Handler> activeHandlers, Stack stack) {
+    this.camps = camps;
+    this.activeHandlers = activeHandlers;
+    this.stack = stack;
   }
 
-  static void start(Map<String, PlayerHandler> handlers) throws InterruptedException {
-    var camps = handlers.keySet()
+  public static void start(Map<String, Player> players) throws InterruptedException {
+    players = Map.copyOf(players);
+    var camps = players.entrySet()
       .stream()
-      .collect(Collectors.toUnmodifiableMap(
-        Function.identity(),
-        n -> new Camp(6, List.of(), List.of())));
-    var game = new Game(camps, Map.copyOf(handlers), CARDS);
+      .collect(toMap(Map.Entry::getKey, e -> e.getValue().camp, (_1, _2) -> null, HashMap::new));
+    var handlers = players.entrySet()
+      .stream()
+      .collect(toMap(Map.Entry::getKey, e -> e.getValue().handler, (_1, _2) -> null, HashMap::new));
+    var game = new Game(camps, handlers, new Stack(CARDS));
+
+
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
       while (!game.isFinished()) {
@@ -39,7 +43,7 @@ public final class Game {
         var futures = game.activeHandlers()
           .entrySet()
           .stream()
-          .collect(Collectors.toUnmodifiableMap(
+          .collect(toUnmodifiableMap(
             Map.Entry::getKey,
             e -> {
               var name = e.getKey();
@@ -65,6 +69,10 @@ public final class Game {
     }
   }
 
+  private Map<String, Player.Handler> activeHandlers() {
+    return Map.copyOf(activeHandlers);
+  }
+
   private GameState gameState(String player) {
     return new GameState(camps, stack.draw(3), player);
   }
@@ -84,24 +92,32 @@ public final class Game {
     stack.discardAll(cards);
   }
 
-  private record AskAction(
-    GameState gameState,
-    Future<Action> answer) {
-    private static AskAction asking(PlayerHandler handler, GameState gameState, ExecutorService executor) {
-      return new AskAction(gameState, executor.submit(() -> handler.askAction(gameState)));
+  public record Player(
+    String name,
+    Camp camp,
+    Handler handler) {
+    public Player {
+      Objects.requireNonNull(name);
+      Objects.requireNonNull(camp);
+      Objects.requireNonNull(handler);
+    }
+
+    @FunctionalInterface
+    public interface Handler {
+      Action askAction(GameState gs) throws InterruptedException;
     }
   }
 
-  private Map<String, PlayerHandler> activeHandlers() {
-    return Map.copyOf(activeHandlers);
+  private record AskAction(
+    GameState gameState,
+    Future<Action> answer) {
+    private static AskAction asking(Player.Handler handler, GameState gameState, ExecutorService executor) {
+      return new AskAction(gameState, executor.submit(() -> handler.askAction(gameState)));
+    }
   }
 
   private boolean isFinished() {
     return stack.isEmpty();
   }
 
-  @FunctionalInterface
-  public interface PlayerHandler {
-    Action askAction(GameState gs) throws InterruptedException;
-  }
 }
