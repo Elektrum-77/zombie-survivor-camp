@@ -15,7 +15,15 @@ public record Camp(
   List<Searchable> searches) {
   public static final ResourceBank SEARCH_COST = new ResourceBank(Map.of(PEOPLE, 1));
 
-  ResourceBank production() {
+  public int availableSpace() {
+    return buildings.size() - maxBuildCount;
+  }
+
+  public boolean isSpaceAvailable() {
+    return buildings.size() < maxBuildCount;
+  }
+
+  public ResourceBank production() {
     var searchCost = Stream.of(SEARCH_COST.multiply(searches().size()));
     var production = buildings.stream()
       .map(Buildable::production);
@@ -27,7 +35,7 @@ public record Camp(
     if (!production().containsAll(buildable.cost())) {
       throw new IllegalArgumentException("Not enough materials to construct " + buildable);
     }
-    if (this.buildings.size() >= maxBuildCount) {
+    if (!isSpaceAvailable()) {
       throw new IllegalArgumentException("Too many buildings");
     }
     var buildings = new ArrayList<>(this.buildings);

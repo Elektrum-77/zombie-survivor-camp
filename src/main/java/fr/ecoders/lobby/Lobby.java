@@ -33,7 +33,7 @@ public final class Lobby {
     players.remove(username);
   }
 
-
+  /// returns true if the user's state has changed
   public boolean ready(String username) {
     if (!players.contains(username)) {
       throw new IllegalArgumentException("Player " + username + " does not exist");
@@ -41,6 +41,7 @@ public final class Lobby {
     return ready.add(username);
   }
 
+  /// returns true if the user's state has changed
   public boolean unready(String username) {
     if (!players.contains(username)) {
       throw new IllegalArgumentException("Player " + username + " does not exist");

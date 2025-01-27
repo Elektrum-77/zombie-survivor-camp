@@ -6,6 +6,7 @@
     "npm:@vitejs/plugin-vue@^5.2.1": "5.2.1_vite@6.0.11__@types+node@22.10.7__jiti@2.4.2_vue@3.5.13__typescript@5.7.3_@types+node@22.10.7_jiti@2.4.2_typescript@5.7.3",
     "npm:@vue/eslint-config-typescript@^14.3.0": "14.3.0_eslint@9.18.0__jiti@2.4.2_eslint-plugin-vue@9.32.0__eslint@9.18.0___jiti@2.4.2__jiti@2.4.2_typescript@5.7.3_jiti@2.4.2",
     "npm:@vue/tsconfig@0.7": "0.7.0_typescript@5.7.3_vue@3.5.13__typescript@5.7.3",
+    "npm:@vueuse/components@^12.5.0": "12.5.0_typescript@5.7.3",
     "npm:@vueuse/core@^12.5.0": "12.5.0_typescript@5.7.3",
     "npm:dayjs@^1.11.13": "1.11.13",
     "npm:eslint-plugin-vue@^9.32.0": "9.32.0_eslint@9.18.0__jiti@2.4.2_jiti@2.4.2",
@@ -810,6 +811,14 @@
       "integrity": "sha512-ku2uNz5MaZ9IerPPUyOHzyjhXoX2kVJaVf7hL315DC17vS6IiZRmmCPfggNbU16QTvM80+uYYy3eYJB59WCtvg==",
       "dependencies": [
         "typescript",
+        "vue"
+      ]
+    },
+    "@vueuse/components@12.5.0_typescript@5.7.3": {
+      "integrity": "sha512-aLgEW8bidRZ4qkVOIl958NAev+XKYTtbfsIj5ObjiDwvBDqxmGVCwMQvWHUQN37tb8JSkRF22gTUbXNt0iSwLQ==",
+      "dependencies": [
+        "@vueuse/core",
+        "@vueuse/shared",
         "vue"
       ]
     },
@@ -1897,6 +1906,7 @@
         "npm:@vitejs/plugin-vue@^5.2.1",
         "npm:@vue/eslint-config-typescript@^14.3.0",
         "npm:@vue/tsconfig@0.7",
+        "npm:@vueuse/components@^12.5.0",
         "npm:@vueuse/core@^12.5.0",
         "npm:dayjs@^1.11.13",
         "npm:eslint-plugin-vue@^9.32.0",

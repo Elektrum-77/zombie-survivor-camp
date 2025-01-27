@@ -5,11 +5,6 @@ import java.time.Instant;
 import java.util.List;
 
 public sealed interface ServerEvent {
-  enum GameProgress {
-    STARTING,
-    FINISHED
-  }
-
   record ChatMessage(
     String username,
     String text,

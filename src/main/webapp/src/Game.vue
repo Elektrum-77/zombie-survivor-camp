@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import type {Action, ActionType, Card, GameState} from "@/game.ts";
-import CardView from "@/Card.vue";
+import type { GameState } from "@/game.ts";
+import CardView from "@/card/CardView.vue";
 import CampSelector from "@/CampSelector.vue";
-import {ref, shallowRef} from "vue";
-import Camp from "@/Camp.vue";
+import { ref, shallowRef } from "vue";
+import CampView from "@/CampView.vue";
 import CardContextualMenu from "@/CardContextualMenu.vue";
+import type { Action, ActionType } from "@/Action.ts";
+import type { Card } from "@/card/Card.ts";
+import Hand from "@/Hand.vue";
 
 const {username} = defineProps<GameState & {username:string}>()
 const emit = defineEmits<{
@@ -42,25 +45,25 @@ function validateActionAndCloseMenu(action: ActionType) {
     </div>
     <div>
       <h2>Camp</h2>
-      <Camp v-bind="camps[selectedCamp]" />
+      <CampView v-bind="camps[selectedCamp]" />
     </div>
     <div>
       <h2>Hand</h2>
-      <div class="row">
-        <CardView
-          v-for="({type, value}, i) in hand"
-          :type
-          :value
-          class="card"
-          @click="selectCard($event, {type, value}, i)" />
-        <CardContextualMenu
-          v-if="selectedCard !== undefined"
-          :card="selectedCard"
-          :position="selectedCardPosition"
-          @close="closeContextualMenu()"
-          @validate="validateActionAndCloseMenu($event)"
-        />
-      </div>
+      <Hand :camp="camps[username]" :hand @action="$emit('action', $event)"/>
+<!--      <div class="row">-->
+<!--        <CardView-->
+<!--          v-for="(card, i) in hand"-->
+<!--          v-bind="card"-->
+<!--          class="card"-->
+<!--          @click="selectCard($event, card, i)"/>-->
+<!--        <CardContextualMenu-->
+<!--          v-if="selectedCard !== undefined"-->
+<!--          :card="selectedCard"-->
+<!--          :position="selectedCardPosition"-->
+<!--          @close="closeContextualMenu()"-->
+<!--          @validate="validateActionAndCloseMenu($event)"-->
+<!--        />-->
+<!--      </div>-->
     </div>
   </div>
 </template>

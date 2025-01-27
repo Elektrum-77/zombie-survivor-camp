@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 @WebSocket(path = "game/{username}")
 public class WebSocketServer {
   private static final Logger LOGGER = Logger.getLogger(WebSocketServer.class.getName());
-  private static final int MIN_PLAYER_COUNT = 2;
+  public static final int MIN_PLAYER_COUNT = 2;
   static final TypedKey<Thread> ACTION_THREAD_KEY = new TypedKey<>("action_thread");
   static final TypedKey<SynchronousQueue<Action>> ACTION_QUEUE_KEY = new TypedKey<>("action_queue");
   static final TypedKey<String> USERNAME_KEY = TypedKey.forString("username");
@@ -48,10 +48,12 @@ public class WebSocketServer {
             var inLobby = new InLobby();
             state = inLobby;
             LOGGER.info("In lobby");
-            inLobby.waitStart(MIN_PLAYER_COUNT);
+            inLobby.waitStart();
             state = new InGame();
             LOGGER.info("In game");
-            InGame.start(connections);
+            try {
+              InGame.start(connections);
+            } catch (AssertionError ae) { /* reset server state */ }
           }
         } catch (InterruptedException ex) { /* exit thread */ }
       });
@@ -69,6 +71,7 @@ public class WebSocketServer {
     synchronized (lock) {
       switch (state) {
         case InGame _ -> {
+          connection.sendTextAndAwait("_" + connections.listAll().size() + "_players_connected");
           connection.sendTextAndAwait("GAME_ALREADY_STARTED");
           connection.closeAndAwait();
         }

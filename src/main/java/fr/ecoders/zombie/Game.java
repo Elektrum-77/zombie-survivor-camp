@@ -24,7 +24,7 @@ public final class Game {
     this.stack = stack;
   }
 
-  public static void start(Map<String, Player> players) throws InterruptedException {
+  public static void start(Map<String, Player> players, int minPlayerCount) throws InterruptedException {
     players = Map.copyOf(players);
     var camps = players.entrySet()
       .stream()
@@ -39,7 +39,7 @@ public final class Game {
 
       while (!game.isFinished()) {
         var activeHandlers = game.activeHandlers();
-        if (activeHandlers.isEmpty()) {
+        if (activeHandlers.size() < minPlayerCount) {
           return;
         }
 

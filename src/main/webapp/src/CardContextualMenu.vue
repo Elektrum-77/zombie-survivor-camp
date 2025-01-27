@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type {ActionType, Card} from "@/game.ts";
-import CardView from "@/Card.vue";
+import CardView from "@/card/CardView.vue";
 import {onClickOutside} from "@vueuse/core";
 import {ref} from "vue";
+import type { ActionType } from "@/Action.ts";
+import type { Card } from "@/card/Card.ts";
 
 defineProps<{
   card: Card,
@@ -30,7 +31,7 @@ onClickOutside(menu, () => {
       left: `${position.x}px`,
       zIndex: 2
     }">
-      <CardView :type="card.type" :value="card.value" style="transform: scale(1.05)" />
+      <CardView v-bind="card" style="transform: scale(1.05)" />
       <div class="col menu">
         <span @click="$emit('validate', 'Construct')" >Construire</span>
         <span @click="$emit('validate', 'Search')" >Rechercher</span>

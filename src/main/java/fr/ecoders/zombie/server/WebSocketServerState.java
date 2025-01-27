@@ -9,6 +9,7 @@ import fr.ecoders.zombie.Game.Player;
 import fr.ecoders.zombie.server.ServerEvent.LobbyEvent;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_QUEUE_KEY;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_THREAD_KEY;
+import static fr.ecoders.zombie.server.WebSocketServer.MIN_PLAYER_COUNT;
 import static fr.ecoders.zombie.server.WebSocketServer.USERNAME_KEY;
 import io.quarkus.websockets.next.OpenConnections;
 import io.quarkus.websockets.next.WebSocketConnection;
@@ -42,9 +43,9 @@ public sealed interface WebSocketServerState {
       }
     }
 
-    public void waitStart(int minPlayerCount) throws InterruptedException {
+    public void waitStart() throws InterruptedException {
       synchronized (lock) {
-        while (minPlayerCount > lobby.players()
+        while (MIN_PLAYER_COUNT > lobby.players()
           .size() || !lobby.isEveryoneReady()) {
           lock.wait();
         }
@@ -116,7 +117,7 @@ public sealed interface WebSocketServerState {
             var userdata = c.userData();
             return userdata.get(USERNAME_KEY);
           }, InGame::player));
-      Game.start(players);
+      Game.start(players, MIN_PLAYER_COUNT);
     }
 
     public void onAction(WebSocketConnection connection, Action action) {

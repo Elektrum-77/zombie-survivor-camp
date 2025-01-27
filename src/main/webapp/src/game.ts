@@ -1,24 +1,11 @@
-export type Resource = "PEOPLE" | "WATER" | "FOOD" | "MEDICINES" | "MILITARY" | "MATERIALS" | "FUEL"
-export type ResourceBank = Record<Resource, number | undefined>
+import type { Message } from "@/Chat.vue";
+import type { Card } from "@/card/Card.ts";
+import type { ResourceBank } from "@/ResourceBank.ts";
 
 export type GameState = {
   hand: Card[]
   camps: Record<string, Camp>
 }
-
-export type Action = {
-  type: "Construct"
-  value: {
-    index: number
-  }
-} | {
-  type: "Search"
-  value: {
-    index: number
-  }
-}
-
-export type ActionType = Action["type"]
 
 export type LobbyPlayer = {
   username: string
@@ -27,16 +14,29 @@ export type LobbyPlayer = {
 
 export type Camp = {
   maxBuildCount: number
-  buildings: Card[]
-  searches: Card[]
+  availableSpace: number
+  isSpaceAvailable: boolean
+  searchCost: ResourceBank
+  production: ResourceBank
+  buildings: readonly Card[]
+  searches: readonly Card[]
 }
 
-export type Card = {
-  type: "Building"
-  value: {
-    name: string
-    cost: ResourceBank
-    production: ResourceBank
-    search: ResourceBank
-  }
+type LobbyEvent = {
+  username: string
+  state: "CONNECT" | "DISCONNECT" | "READY" | "UNREADY"
+}
+
+export type Event = {
+  type: "ChatMessage"
+  value: Message
+} | {
+  type: "LobbyEvent"
+  value: LobbyEvent
+} | {
+  type: "GameState"
+  value: GameState
+} | {
+  type: "ConnectedPlayerList",
+  value: LobbyPlayer[]
 }

@@ -5,7 +5,8 @@ import Chat, { type Message } from "@/Chat.vue";
 import { now, useEventListener } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
-import type { Action, GameState, LobbyPlayer } from "@/game.ts";
+import type { Event, GameState, LobbyPlayer } from "@/game.ts";
+import type { Action } from "@/Action.ts";
 
 
 const socket = shallowRef<WebSocket>()
@@ -21,28 +22,6 @@ const gameState = shallowRef<GameState>()
 
 function addMessage(msg: Message) {
   messages.value = [...messages.value, msg]
-}
-
-type LobbyEvent = {
-  username: string
-  state: "CONNECT" | "DISCONNECT" | "READY" | "UNREADY"
-}
-type GameProgress = "STARTING" | "FINISHED"
-type Event = {
-  type: "ChatMessage"
-  value: Message
-} | {
-  type: "LobbyEvent"
-  value: LobbyEvent
-} | {
-  type: "GameState"
-  value: GameState
-} | {
-  type: "GameProgress"
-  value: GameProgress
-} | {
-  type: "ConnectedPlayerList",
-  value: LobbyPlayer[]
 }
 
 function onConnect(s: WebSocket) {
@@ -90,11 +69,6 @@ function onConnect(s: WebSocket) {
             break
         }
         addMessage({timestamp: now().valueOf(), username, text: state})
-        break
-      case "GameProgress":
-        if (parsed.value === "STARTING") {
-          gameStarted.value = true
-        }
         break
       case "GameState":
         gameState.value = parsed.value

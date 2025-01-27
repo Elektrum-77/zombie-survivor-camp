@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Action;
+import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.Card;
 import fr.ecoders.zombie.ResourceBank;
 import io.quarkus.jackson.ObjectMapperCustomizer;
@@ -21,6 +22,34 @@ import java.io.IOException;
 
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
+
+  private static final JsonSerializer<Card.Building> BUILDING_JSON_SERIALIZER =
+    new StdSerializer<>(Card.Building.class) {
+      @Override
+      public void serializeWithType(Card.Building value, JsonGenerator gen, SerializerProvider serializers,
+        TypeSerializer typeSer) throws IOException {
+        serialize(value, gen, serializers);
+      }
+
+      @Override
+      public void serialize(Card.Building building, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("type", "Building");
+        generator.writeFieldName("value");
+        generator.writeStartObject();
+        generator.writeStringField("name", building.name());
+        generator.writeFieldName("cost");
+        provider.defaultSerializeValue(building.cost(), generator);
+        generator.writeFieldName("production");
+        provider.defaultSerializeValue(building.production(), generator);
+        generator.writeFieldName("search");
+        provider.defaultSerializeValue(building.search(), generator);
+        generator.writeEndObject();
+        generator.writeEndObject();
+      }
+    };
 
   private static final JsonSerializer<ResourceBank> RESOURCE_BANK_JSON_SERIALIZER =
     new StdSerializer<>(ResourceBank.class) {
@@ -90,30 +119,23 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeEndObject();
       }
     };
-  private static final JsonSerializer<Card.Building> BUILDING_JSON_SERIALIZER =
-    new StdSerializer<>(Card.Building.class) {
+  private static final JsonSerializer<Camp> CAMP_JSON_SERIALIZER =
+    new StdSerializer<>(Camp.class) {
       @Override
-      public void serializeWithType(Card.Building value, JsonGenerator gen, SerializerProvider serializers,
-        TypeSerializer typeSer) throws IOException {
-        serialize(value, gen, serializers);
-      }
-
-      @Override
-      public void serialize(Card.Building building, JsonGenerator generator,
-        SerializerProvider provider)
+      public void serialize(Camp camp, JsonGenerator generator, SerializerProvider provider)
       throws IOException {
         generator.writeStartObject();
-        generator.writeStringField("type", "Building");
-        generator.writeFieldName("value");
-        generator.writeStartObject();
-        generator.writeStringField("name", building.name());
-        generator.writeFieldName("cost");
-        provider.defaultSerializeValue(building.cost(), generator);
+        generator.writeNumberField("maxBuildCount", camp.maxBuildCount());
+        generator.writeNumberField("availableSpace", camp.availableSpace());
+        generator.writeBooleanField("isSpaceAvailable", camp.isSpaceAvailable());
+        generator.writeFieldName("searchCost");
+        provider.defaultSerializeValue(Camp.SEARCH_COST, generator);
         generator.writeFieldName("production");
-        provider.defaultSerializeValue(building.production(), generator);
-        generator.writeFieldName("search");
-        provider.defaultSerializeValue(building.search(), generator);
-        generator.writeEndObject();
+        provider.defaultSerializeValue(camp.production(), generator);
+        generator.writeFieldName("buildings");
+        provider.defaultSerializeValue(camp.buildings(), generator);
+        generator.writeFieldName("searches");
+        provider.defaultSerializeValue(camp.searches(), generator);
         generator.writeEndObject();
       }
     };
@@ -160,6 +182,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     var module = new SimpleModule();
     module.addSerializer(ResourceBank.class, RESOURCE_BANK_JSON_SERIALIZER);
     module.addSerializer(Card.Building.class, BUILDING_JSON_SERIALIZER);
+    module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ConnectedPlayerList.class, CONNECTED_PLAYER_LIST_JSON_SERIALIZER);
