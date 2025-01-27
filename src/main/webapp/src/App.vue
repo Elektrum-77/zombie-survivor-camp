@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue';
+import {ref, shallowRef, watch} from 'vue';
 import Login from "@/Login.vue";
 import Chat, { type Message } from "@/Chat.vue";
 import { now, useEventListener } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
-import type { Action, GameState } from "@/game.ts";
+import Game from "@/Game.vue";
+import type {Action, GameState, LobbyPlayer} from "@/game.ts";
 
 
 const socket = shallowRef<WebSocket>()
 const username = ref(localStorage.getItem("username") ?? "")
 watch(username, v => localStorage.setItem("username", v))
 
-const players = ref<Record<string, { username: string, isReady: boolean }>>({})
+const players = ref<Record<string, LobbyPlayer>>({})
 
+const connected = shallowRef<boolean>(false)
 const messages = shallowRef<Message[]>([])
 const gameStarted = ref<boolean>(false)
 const gameState = shallowRef<GameState>()
@@ -38,6 +40,9 @@ type Event = {
 } | {
   type: "GameProgress"
   value: GameProgress
+} | {
+  type: "ConnectedPlayerList",
+  value: { players: LobbyPlayer[] }
 }
 
 function onConnect(s: WebSocket) {
@@ -45,10 +50,11 @@ function onConnect(s: WebSocket) {
   socket.value = s
   messages.value = []
   s.onopen = () => {
-    s.send(JSON.stringify({type: "LobbyCommand", value: "READY"}))
+    connected.value = true
   }
   s.onclose = () => {
     console.log("connection closed")
+    connected.value = false
   }
   s.onmessage = ({data}: MessageEvent<string>) => {
     if (data === "NAME_ALREADY_USED") {
@@ -92,12 +98,24 @@ function onConnect(s: WebSocket) {
       case "GameStateWrapper":
         gameState.value = parsed.value.state
         break
+      case "ConnectedPlayerList":
+        const alreadyConnectedPlayers =  parsed.value.players.reduce((acc: Record<string,
+        LobbyPlayer>, player) => {
+          acc[player.username] = player
+          return acc
+        }, {})
+        players.value = {...players.value, ...alreadyConnectedPlayers}
+        break
     }
   }
 }
 
 function sendChatMessage(text: string) {
   socket.value?.send(JSON.stringify({type: "ChatMessage", value: {text}}))
+}
+
+function setReady(ready: boolean) {
+  socket.value?.send(JSON.stringify({type: "LobbyCommand", value: ready ? "READY" : "UNREADY"}))
 }
 
 function sendAction(action: Action) {
@@ -109,17 +127,39 @@ useEventListener("unload", () => socket.value?.close())
 </script>
 
 <template>
-  <Lobby v-if="gameState===undefined" :players="Object.values(players)"/>
-<!--  <Game v-else/>-->
-  <div class="chat">
-    <Login v-model:username="username" @connected="onConnect"/>
-    <Chat :messages="messages" @send="sendChatMessage"/>
+  <div>
+    <div class="layout">
+      <Login v-if="!connected" v-model:username="username" @connected="onConnect"/>
+      <Lobby v-else-if="gameState===undefined" :players="Object.values(players)" @ready="setReady($event)"/>
+      <Game v-else
+            :hand="gameState.hand"
+            :camps="gameState.camps"
+            :username="username"
+            @action="sendAction($event)"
+      />
+      <Chat class="chat" :messages="messages" @send="sendChatMessage" />
+    </div>
   </div>
 </template>
 
 <style scoped>
+.layout {
+  display: grid;
+  min-width: 100vw;
+  min-height: 100vh;
+  grid-template-columns: 1fr 20vw;
+  background-color: #f8f8f8;
+  padding: 16px;
+}
+
 .chat {
-  max-width: fit-content;
-  margin-left: auto;
+  padding: 8px;
+  transition: all 0.5s;
+}
+
+.chat:focus-within {
+  border-left: 1px solid #ccc;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  background-color: white;
 }
 </style>

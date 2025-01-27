@@ -22,13 +22,14 @@ defineProps<{
 </script>
 
 <template>
-  <div>
+  <div class="chat-layout">
     <ul class="messages">
       <li v-for="{username, text, timestamp} in messages">
         <p v-text="`${dayjs.unix(timestamp).format('HH:mm')} - ${username} : ${text}`"/>
       </li>
     </ul>
-    <div>
+
+    <div class="input-section">
       <input type="text" v-model="message">
       <button @click="$emit('send', message)">send</button>
     </div>
@@ -36,7 +37,24 @@ defineProps<{
 </template>
 
 <style scoped>
-.messages {
-  max-width: 100%;
+.chat-layout {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: end;
+}
+
+ul {
+  padding: 0;
+}
+
+ul li {
+  list-style-type: none;
+  margin: 0;
+}
+
+.input-section {
+  display: grid;
+  grid-template-columns: 1fr 0.4fr;
+  gap: 8px;
 }
 </style>
