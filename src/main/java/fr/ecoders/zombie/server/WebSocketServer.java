@@ -1,21 +1,8 @@
 package fr.ecoders.zombie.server;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import fr.ecoders.quarkus.SealedDeserializer;
 import fr.ecoders.zombie.Action;
-import fr.ecoders.zombie.Card;
 import fr.ecoders.zombie.server.WebSocketServerState.InGame;
 import fr.ecoders.zombie.server.WebSocketServerState.InLobby;
-import io.quarkus.jackson.ObjectMapperCustomizer;
-import io.quarkus.runtime.Startup;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.OnOpen;
@@ -29,9 +16,7 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import java.io.IOException;
 import java.time.Instant;
-import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Logger;
 
@@ -40,12 +25,11 @@ import java.util.logging.Logger;
 public class WebSocketServer {
   private static final Logger LOGGER = Logger.getLogger(WebSocketServer.class.getName());
   private static final int MIN_PLAYER_COUNT = 2;
-  static final TypedKey<Thread> ACTION_THREAD_KEY = new TypedKey<>("action_queue");
+  static final TypedKey<Thread> ACTION_THREAD_KEY = new TypedKey<>("action_thread");
   static final TypedKey<SynchronousQueue<Action>> ACTION_QUEUE_KEY = new TypedKey<>("action_queue");
   static final TypedKey<String> USERNAME_KEY = TypedKey.forString("username");
   private final Object lock = new Object();
   volatile private WebSocketServerState state;
-  private Thread thread;
 
   @Inject
   WebSocketConnection connection;
@@ -56,8 +40,7 @@ public class WebSocketServer {
   }
 
   void onStart(@Observes StartupEvent e) {
-
-    this.thread = Thread.ofVirtual()
+    Thread.ofVirtual()
       .start(() -> {
         try {
           while (!Thread.interrupted()) {

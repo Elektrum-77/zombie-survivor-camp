@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {ref, shallowRef, watch} from 'vue';
+import { ref, shallowRef, watch } from 'vue';
 import Login from "@/Login.vue";
 import Chat, { type Message } from "@/Chat.vue";
 import { now, useEventListener } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
-import type {Action, GameState, LobbyPlayer} from "@/game.ts";
+import type { Action, GameState, LobbyPlayer } from "@/game.ts";
 
 
 const socket = shallowRef<WebSocket>()
@@ -24,7 +24,7 @@ function addMessage(msg: Message) {
 }
 
 type LobbyEvent = {
-  player: string
+  username: string
   state: "CONNECT" | "DISCONNECT" | "READY" | "UNREADY"
 }
 type GameProgress = "STARTING" | "FINISHED"
@@ -35,14 +35,14 @@ type Event = {
   type: "LobbyEvent"
   value: LobbyEvent
 } | {
-  type: "GameStateWrapper"
-  value: { state: GameState }
+  type: "GameState"
+  value: GameState
 } | {
   type: "GameProgress"
   value: GameProgress
 } | {
   type: "ConnectedPlayerList",
-  value: { players: LobbyPlayer[] }
+  value: LobbyPlayer[]
 }
 
 function onConnect(s: WebSocket) {
@@ -55,6 +55,7 @@ function onConnect(s: WebSocket) {
   s.onclose = () => {
     console.log("connection closed")
     connected.value = false
+    gameState.value = undefined
   }
   s.onmessage = ({data}: MessageEvent<string>) => {
     if (data === "NAME_ALREADY_USED") {
@@ -73,34 +74,34 @@ function onConnect(s: WebSocket) {
         addMessage(parsed.value)
         break
       case "LobbyEvent":
-        const {player, state} = parsed.value
+        const {username, state} = parsed.value
         switch (state) {
           case "CONNECT":
-            players.value[player] = {username: player, isReady: false,}
+            players.value[username] = {username, isReady: false,}
             break
           case "DISCONNECT":
-            delete players.value[player]
+            delete players.value[username]
             break
           case "READY":
-            players.value[player].isReady = true
+            players.value[username].isReady = true
             break
           case "UNREADY":
-            players.value[player].isReady = false
+            players.value[username].isReady = false
             break
         }
-        addMessage({timestamp: now().valueOf(), username: player, text: state})
+        addMessage({timestamp: now().valueOf(), username, text: state})
         break
       case "GameProgress":
         if (parsed.value === "STARTING") {
           gameStarted.value = true
         }
         break
-      case "GameStateWrapper":
-        gameState.value = parsed.value.state
+      case "GameState":
+        gameState.value = parsed.value
         break
       case "ConnectedPlayerList":
-        const alreadyConnectedPlayers =  parsed.value.players.reduce((acc: Record<string,
-        LobbyPlayer>, player) => {
+        const alreadyConnectedPlayers = parsed.value.reduce(
+          (acc: Record<string, LobbyPlayer>, player) => {
           acc[player.username] = player
           return acc
         }, {})
@@ -111,7 +112,7 @@ function onConnect(s: WebSocket) {
 }
 
 function sendChatMessage(text: string) {
-  socket.value?.send(JSON.stringify({type: "ChatMessage", value: {text}}))
+  socket.value?.send(JSON.stringify({type: "ChatMessage", value: text}))
 }
 
 function setReady(ready: boolean) {
@@ -119,7 +120,7 @@ function setReady(ready: boolean) {
 }
 
 function sendAction(action: Action) {
-  socket.value?.send(JSON.stringify({type: "ActionWrapper", value: {action}}))
+  socket.value?.send(JSON.stringify({type: "Action", value: action}))
 }
 
 useEventListener("unload", () => socket.value?.close())

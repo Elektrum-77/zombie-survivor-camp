@@ -14,6 +14,7 @@ import io.quarkus.websockets.next.OpenConnections;
 import io.quarkus.websockets.next.WebSocketConnection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.SynchronousQueue;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public sealed interface WebSocketServerState {
@@ -89,10 +90,11 @@ public sealed interface WebSocketServerState {
     private static final String ALREADY_PLAYED = "ALREADY_PLAYED";
 
     private static Player player(WebSocketConnection connection) {
+      var queue = new SynchronousQueue<Action>();
       var userdata = connection.userData();
       var username = userdata.get(USERNAME_KEY);
-      var queue = userdata.get(ACTION_QUEUE_KEY);
       var camp = new Camp(6, List.of(Card.CAMPING_TENT, Card.RAIN_COLLECTORS, Card.VEGETABLE_GARDEN), List.of());
+      userdata.put(ACTION_QUEUE_KEY, queue);
       Player.Handler handler = gs -> {
         if (connection.isClosed()) {
           throw new InterruptedException();
@@ -100,7 +102,7 @@ public sealed interface WebSocketServerState {
         userdata.put(ACTION_THREAD_KEY, Thread.currentThread());
         connection.sendTextAndAwait(new ServerEvent.GameStateWrapper(gs));
         var action = queue.take();
-        userdata.put(ACTION_THREAD_KEY, null);
+        userdata.remove(ACTION_THREAD_KEY);
         return action;
       };
       return new Player(username, camp, handler);

@@ -38,6 +38,10 @@ public final class Game {
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
       while (!game.isFinished()) {
+        var activeHandlers = game.activeHandlers();
+        if (activeHandlers.isEmpty()) {
+          return;
+        }
 
         // ask all active players to choose an action
         var futures = game.activeHandlers()
@@ -62,7 +66,7 @@ public final class Game {
             action.play(game, gameState.hand(), username);
           } catch (ExecutionException ex) {
             game.activeHandlers.remove(username);
-            throw new AssertionError("An error occurred while waiting for a player's action", ex);
+            throw new AssertionError("An error occurred while waiting for " + username + "'s action", ex);
           }
         }
       }
