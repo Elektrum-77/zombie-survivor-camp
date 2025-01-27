@@ -11,27 +11,33 @@ export type Message = {
 const message = shallowRef<string>(localStorage.getItem("message") ?? "")
 watch(message, v => localStorage.setItem("message", v))
 
-defineEmits<{
-  send: [message: string]
-}>()
-
 defineProps<{
   messages: Message[]
 }>()
 
+const emits = defineEmits<{
+  send: [message: string]
+}>()
+
+function send(msg: string): void {
+  emits('send', msg)
+  message.value = ""
+}
 </script>
 
 <template>
   <div class="chat-layout">
-    <ul class="messages">
-      <li v-for="{username, text, timestamp} in messages">
-        <p v-text="`${dayjs.unix(timestamp).format('HH:mm')} - ${username} : ${text}`"/>
-      </li>
-    </ul>
+    <div class="container">
+      <ul class="messages">
+        <li v-for="{username, text, timestamp} in messages">
+          <p v-text="`${dayjs.unix(timestamp).format('HH:mm')} - ${username} : ${text}`"/>
+        </li>
+      </ul>
+    </div>
 
     <div class="input-section">
-      <input type="text" v-model="message">
-      <button @click="$emit('send', message)">send</button>
+      <input type="text" @keyup.enter="send(message)" v-model="message">
+      <button @click="send(message)">send</button>
     </div>
   </div>
 </template>
@@ -43,12 +49,19 @@ defineProps<{
   justify-content: end;
 }
 
+.container {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
 ul {
   padding: 0;
 }
 
 ul li {
   list-style-type: none;
+  overflow-wrap: break-word;
   margin: 0;
 }
 
@@ -56,5 +69,9 @@ ul li {
   display: grid;
   grid-template-columns: 1fr 0.4fr;
   gap: 8px;
+}
+
+.input-section input {
+  width: 100%;
 }
 </style>

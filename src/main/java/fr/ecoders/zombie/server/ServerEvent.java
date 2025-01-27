@@ -3,6 +3,7 @@ package fr.ecoders.zombie.server;
 import fr.ecoders.zombie.GameState;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 public sealed interface ServerEvent {
   record ChatMessage(
@@ -21,11 +22,7 @@ public sealed interface ServerEvent {
     }
   }
 
-  record ConnectedPlayerList(List<ConnectedPlayerList.Player> players) implements ServerEvent {
-    record Player(
-      String username,
-      boolean isReady) {}
-  }
+  record ConnectedPlayers(Map<String, Boolean> players) implements ServerEvent {}
 
   record GameStateWrapper(GameState state) implements ServerEvent {}
 }

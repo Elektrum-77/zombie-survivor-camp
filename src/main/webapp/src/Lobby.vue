@@ -3,7 +3,7 @@ import type {LobbyPlayer} from "@/game.ts";
 import {shallowRef, watchEffect} from "vue";
 
 defineProps<{
-  players: LobbyPlayer[]
+  players: Record<string, boolean>
 }>()
 
 const emit = defineEmits<{
@@ -12,8 +12,8 @@ const emit = defineEmits<{
 
 const ready = shallowRef(false)
 
-function readyLabel(isReady: boolean) {
-  return isReady ? "READY" : "NOT READY"
+function readyLabel(v: boolean) {
+  return v ? "READY" : "NOT READY"
 }
 
 watchEffect(() => { emit("ready", ready.value) })
@@ -24,7 +24,7 @@ watchEffect(() => { emit("ready", ready.value) })
     <div class="col" style="align-items: center">
       <h2>Lobby</h2>
       <div class="row player-list">
-        <div v-for="{username, isReady} in players" class="col player">
+        <div v-for="(isReady, username) in players" class="col player">
           <span class="username">{{username}}</span>
           <span :ready="isReady">{{readyLabel(isReady)}}</span>
         </div>

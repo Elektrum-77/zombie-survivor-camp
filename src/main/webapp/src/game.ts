@@ -37,6 +37,6 @@ export type Event = {
   type: "GameState"
   value: GameState
 } | {
-  type: "ConnectedPlayerList",
-  value: LobbyPlayer[]
+  type: "ConnectedPlayers",
+  value: Record<string, boolean>
 }

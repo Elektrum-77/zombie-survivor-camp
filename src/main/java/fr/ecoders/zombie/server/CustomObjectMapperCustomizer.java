@@ -23,6 +23,17 @@ import java.io.IOException;
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
 
+
+  private static final JsonSerializer<ResourceBank> RESOURCE_BANK_JSON_SERIALIZER =
+    new StdSerializer<>(ResourceBank.class) {
+      @Override
+      public void serialize(ResourceBank resourceBank, JsonGenerator jsonGenerator,
+        SerializerProvider serializerProvider)
+      throws IOException {
+        var v = resourceBank.resources();
+        serializerProvider.defaultSerializeValue(v, jsonGenerator);
+      }
+    };
   private static final JsonSerializer<Card.Building> BUILDING_JSON_SERIALIZER =
     new StdSerializer<>(Card.Building.class) {
       @Override
@@ -48,17 +59,6 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         provider.defaultSerializeValue(building.search(), generator);
         generator.writeEndObject();
         generator.writeEndObject();
-      }
-    };
-
-  private static final JsonSerializer<ResourceBank> RESOURCE_BANK_JSON_SERIALIZER =
-    new StdSerializer<>(ResourceBank.class) {
-      @Override
-      public void serialize(ResourceBank resourceBank, JsonGenerator jsonGenerator,
-        SerializerProvider serializerProvider)
-      throws IOException {
-        var v = resourceBank.resources();
-        serializerProvider.defaultSerializeValue(v, jsonGenerator);
       }
     };
   private static final JsonSerializer<ServerEvent.ChatMessage> CHAT_MESSAGE_JSON_SERIALIZER =
@@ -94,15 +94,15 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeEndObject();
       }
     };
-  private static final JsonSerializer<ServerEvent.ConnectedPlayerList> CONNECTED_PLAYER_LIST_JSON_SERIALIZER =
-    new StdSerializer<>(ServerEvent.ConnectedPlayerList.class) {
+  private static final JsonSerializer<ServerEvent.ConnectedPlayers> CONNECTED_PLAYERS_JSON_SERIALIZER =
+    new StdSerializer<>(ServerEvent.ConnectedPlayers.class) {
       @Override
-      public void serialize(ServerEvent.ConnectedPlayerList list, JsonGenerator generator, SerializerProvider provider)
+      public void serialize(ServerEvent.ConnectedPlayers v, JsonGenerator generator, SerializerProvider provider)
       throws IOException {
         generator.writeStartObject();
-        generator.writeStringField("type", "ConnectedPlayerList");
+        generator.writeStringField("type", "ConnectedPlayers");
         generator.writeFieldName("value");
-        provider.defaultSerializeValue(list.players(), generator);
+        provider.defaultSerializeValue(v.players(), generator);
         generator.writeEndObject();
       }
     };
@@ -185,7 +185,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
-    module.addSerializer(ServerEvent.ConnectedPlayerList.class, CONNECTED_PLAYER_LIST_JSON_SERIALIZER);
+    module.addSerializer(ServerEvent.ConnectedPlayers.class, CONNECTED_PLAYERS_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.GameStateWrapper.class, GAME_STATE_WRAPPER_JSON_SERIALIZER);
     module.addDeserializer(PlayerCommand.class, PLAYER_COMMAND_JSON_DESERIALIZER);
     module.addDeserializer(Action.class, ACTION_JSON_DESERIALIZER);

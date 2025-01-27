@@ -26,13 +26,7 @@ public sealed interface WebSocketServerState {
 
     public void onOpen(OpenConnections connections, WebSocketConnection connection, String username) {
       synchronized (lock) {
-        var players = connections.stream()
-          .map(WebSocketConnection::userData)
-          .map(u -> u.get(USERNAME_KEY))
-          .filter(Objects::nonNull)
-          .map(n -> new ServerEvent.ConnectedPlayerList.Player(n, lobby.isReady(n)))
-          .toList();
-        connection.sendTextAndAwait(new ServerEvent.ConnectedPlayerList(players));
+        connection.sendTextAndAwait(new ServerEvent.ConnectedPlayers(lobby.players()));
         if (!lobby.connect(username)) {
           connection.sendTextAndAwait(NAME_ALREADY_USED);
         }

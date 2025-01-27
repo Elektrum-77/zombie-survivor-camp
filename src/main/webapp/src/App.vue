@@ -5,7 +5,7 @@ import Chat, { type Message } from "@/Chat.vue";
 import { now, useEventListener } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
-import type { Event, GameState, LobbyPlayer } from "@/game.ts";
+import type { Event, GameState } from "@/game.ts";
 import type { Action } from "@/Action.ts";
 
 
@@ -13,11 +13,10 @@ const socket = shallowRef<WebSocket>()
 const username = ref(localStorage.getItem("username") ?? "")
 watch(username, v => localStorage.setItem("username", v))
 
-const players = ref<Record<string, LobbyPlayer>>({})
+const players = ref<Record<string, boolean>>({})
 
 const connected = shallowRef<boolean>(false)
 const messages = shallowRef<Message[]>([])
-const gameStarted = ref<boolean>(false)
 const gameState = shallowRef<GameState>()
 
 function addMessage(msg: Message) {
@@ -37,6 +36,15 @@ function onConnect(s: WebSocket) {
     gameState.value = undefined
   }
   s.onmessage = ({data}: MessageEvent<string>) => {
+    if (data === "GAME_ALREADY_STARTED") {
+      addMessage({
+        username: "system",
+        text: "User name already taken, please choose another one",
+        timestamp: now().valueOf(),
+      })
+      s.close()
+      return
+    }
     if (data === "NAME_ALREADY_USED") {
       addMessage({
         username: "system",
@@ -55,17 +63,15 @@ function onConnect(s: WebSocket) {
       case "LobbyEvent":
         const {username, state} = parsed.value
         switch (state) {
-          case "CONNECT":
-            players.value[username] = {username, isReady: false,}
+          case "CONNECT": // same as unready
+          case "UNREADY":
+            players.value[username] = false
             break
           case "DISCONNECT":
             delete players.value[username]
             break
           case "READY":
-            players.value[username].isReady = true
-            break
-          case "UNREADY":
-            players.value[username].isReady = false
+            players.value[username] = true
             break
         }
         addMessage({timestamp: now().valueOf(), username, text: state})
@@ -73,13 +79,8 @@ function onConnect(s: WebSocket) {
       case "GameState":
         gameState.value = parsed.value
         break
-      case "ConnectedPlayerList":
-        const alreadyConnectedPlayers = parsed.value.reduce(
-          (acc: Record<string, LobbyPlayer>, player) => {
-          acc[player.username] = player
-          return acc
-        }, {})
-        players.value = {...players.value, ...alreadyConnectedPlayers}
+      case "ConnectedPlayers":
+        players.value = parsed.value
         break
     }
   }
@@ -105,7 +106,7 @@ useEventListener("unload", () => socket.value?.close())
   <div>
     <div class="layout">
       <Login v-if="!connected" v-model:username="username" @connected="onConnect"/>
-      <Lobby v-else-if="gameState===undefined" :players="Object.values(players)" @ready="setReady($event)"/>
+      <Lobby v-else-if="gameState===undefined" :players="players" @ready="setReady($event)"/>
       <Game v-else
             :hand="gameState.hand"
             :camps="gameState.camps"
@@ -120,15 +121,16 @@ useEventListener("unload", () => socket.value?.close())
 <style scoped>
 .layout {
   display: grid;
-  min-width: 100vw;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   grid-template-columns: 1fr 20vw;
   background-color: #f8f8f8;
-  padding: 16px;
 }
 
 .chat {
+  border-left: 1px solid transparent;
   padding: 8px;
+  height: 100vh;
   transition: all 0.5s;
 }
 
