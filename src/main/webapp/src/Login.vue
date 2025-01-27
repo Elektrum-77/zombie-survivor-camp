@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { useBrowserLocation } from "@vueuse/core";
+
 const username = defineModel<string>("username", {required: true})
 
+const location = useBrowserLocation()
+
 function connect(username: string): WebSocket {
-  const url = `ws://${import.meta.env.VITE_SERVER}/game/${username}`
+  const url = `ws://${location.value.host}/game/${username}`
   console.log(`Connecting to ${url}`)
   return new WebSocket(url)
 }
