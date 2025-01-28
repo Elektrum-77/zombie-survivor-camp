@@ -29,6 +29,8 @@ public sealed interface WebSocketServerState {
         connection.sendTextAndAwait(new ServerEvent.ConnectedPlayers(lobby.players()));
         if (!lobby.connect(username)) {
           connection.sendTextAndAwait(NAME_ALREADY_USED);
+          connection.closeAndAwait();
+          return;
         }
         connection.userData()
           .put(USERNAME_KEY, username);

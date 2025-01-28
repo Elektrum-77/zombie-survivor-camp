@@ -1,5 +1,6 @@
 package fr.ecoders.zombie.server;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -19,11 +20,19 @@ import fr.ecoders.zombie.ResourceBank;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
 import java.io.IOException;
+import java.time.Instant;
 
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
 
-
+  private static final JsonSerializer<Instant> INSTANT_JSON_SERIALIZER =
+    new StdSerializer<>(Instant.class) {
+      @Override
+      public void serialize(Instant instant, JsonGenerator generator, SerializerProvider provider)
+      throws IOException {
+        generator.writeNumber(instant.toEpochMilli());
+      }
+    };
   private static final JsonSerializer<ResourceBank> RESOURCE_BANK_JSON_SERIALIZER =
     new StdSerializer<>(ResourceBank.class) {
       @Override
@@ -140,6 +149,14 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       }
     };
 
+  private static final JsonDeserializer<Instant> INSTANT_JSON_DESERIALIZER =
+    new StdDeserializer<>(Instant.class) {
+      @Override
+      public Instant deserialize(JsonParser parser, DeserializationContext deserializationContext)
+      throws IOException, JacksonException {
+        return Instant.ofEpochMilli(parser.readValueAs(Long.class));
+      }
+    };
   private static final JsonDeserializer<PlayerCommand> PLAYER_COMMAND_JSON_DESERIALIZER =
     new StdDeserializer<>(PlayerCommand.class) {
       @Override
@@ -178,8 +195,15 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     };
 
   @Override
+  public int priority() {
+    return MINIMUM_PRIORITY;
+  }
+
+  @Override
   public void customize(ObjectMapper mapper) {
     var module = new SimpleModule();
+
+    module.addSerializer(Instant.class, INSTANT_JSON_SERIALIZER);
     module.addSerializer(ResourceBank.class, RESOURCE_BANK_JSON_SERIALIZER);
     module.addSerializer(Card.Building.class, BUILDING_JSON_SERIALIZER);
     module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
@@ -187,8 +211,11 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ConnectedPlayers.class, CONNECTED_PLAYERS_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.GameStateWrapper.class, GAME_STATE_WRAPPER_JSON_SERIALIZER);
+
+    module.addDeserializer(Instant.class, INSTANT_JSON_DESERIALIZER);
     module.addDeserializer(PlayerCommand.class, PLAYER_COMMAND_JSON_DESERIALIZER);
     module.addDeserializer(Action.class, ACTION_JSON_DESERIALIZER);
+
     mapper.registerModule(module);
   }
 }

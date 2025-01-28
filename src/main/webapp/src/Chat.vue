@@ -20,6 +20,7 @@ const emits = defineEmits<{
 }>()
 
 function send(msg: string): void {
+  if (msg.trim() === "") return
   emits('send', msg)
   message.value = ""
 }
@@ -30,14 +31,14 @@ function send(msg: string): void {
     <div class="container">
       <ul class="messages">
         <li v-for="{username, text, timestamp} in messages">
-          <p v-text="`${dayjs.unix(timestamp).format('HH:mm')} - ${username} : ${text}`"/>
+          <p v-text="`${dayjs(timestamp).format('HH:mm')} - ${username} : ${text}`"/>
         </li>
       </ul>
     </div>
 
     <div class="input-section">
       <input type="text" @keyup.enter="send(message)" v-model="message">
-      <button @click="send(message)">send</button>
+      <button @click="send(message)" :disabled="message.trim()===''">send</button>
     </div>
   </div>
 </template>
