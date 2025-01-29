@@ -23,6 +23,10 @@ function addMessage(msg: Message) {
   messages.value = [...messages.value, msg]
 }
 
+function addSystemMessage(text: string) {
+  messages.value = [...messages.value, {username: "System", text, timestamp: now().valueOf()}]
+}
+
 function onConnect(s: WebSocket) {
   socket.value?.close()
   socket.value = s
@@ -37,20 +41,12 @@ function onConnect(s: WebSocket) {
   }
   s.onmessage = ({data}: MessageEvent<string>) => {
     if (data === "GAME_ALREADY_STARTED") {
-      addMessage({
-        username: "system",
-        text: "User name already taken, please choose another one",
-        timestamp: now().valueOf(),
-      })
+      addSystemMessage("User name already taken, please choose another one")
       s.close()
       return
     }
     if (data === "NAME_ALREADY_USED") {
-      addMessage({
-        username: "system",
-        text: "User name already taken, please choose another one",
-        timestamp: now().valueOf(),
-      })
+      addSystemMessage("User name already taken, please choose another one")
       s.close()
       return
     }
@@ -65,13 +61,11 @@ function onConnect(s: WebSocket) {
         switch (state) {
           case "CONNECT": // same as unready
           case "UNREADY":
-            players.value[username] = false
+          case "READY":
+            players.value[username] = state === "READY"
             break
           case "DISCONNECT":
             delete players.value[username]
-            break
-          case "READY":
-            players.value[username] = true
             break
         }
         addMessage({timestamp: now().valueOf(), username, text: state})
@@ -121,8 +115,8 @@ useEventListener("unload", () => socket.value?.close())
 <style scoped>
 .layout {
   display: grid;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   grid-template-columns: 1fr 20vw;
   background-color: #f8f8f8;
 }

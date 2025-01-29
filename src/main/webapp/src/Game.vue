@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import type { GameState } from "@/game.ts";
-import CardView from "@/card/CardView.vue";
 import CampSelector from "@/CampSelector.vue";
 import { ref, shallowRef } from "vue";
 import CampView from "@/CampView.vue";
-import CardContextualMenu from "@/CardContextualMenu.vue";
 import type { Action, ActionType } from "@/Action.ts";
 import type { Card } from "@/card/Card.ts";
 import Hand from "@/Hand.vue";
@@ -43,11 +41,11 @@ function validateActionAndCloseMenu(action: ActionType) {
     <div>
       <CampSelector :camps="Object.keys(camps)" v-model:camp="selectedCamp" />
     </div>
-    <div>
+    <div class="camp-container">
       <h2>Camp</h2>
       <CampView v-bind="camps[selectedCamp]" />
     </div>
-    <div>
+    <div v-if="hand.length > 0" class="hand-container">
       <h2>Hand</h2>
       <Hand :camp="camps[username]" :hand @action="$emit('action', $event)"/>
 <!--      <div class="row">-->
@@ -71,16 +69,13 @@ function validateActionAndCloseMenu(action: ActionType) {
 <style scoped>
 .game-layout {
   display: grid;
-  grid-template-rows: 5vh 1fr 25vh;
+  grid-template-rows: auto 1fr auto;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
-.card {
-  cursor: pointer;
-  transition: all 0.25s;
-}
-
-.card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 32px rgba(0, 0, 0, 0.1);
+.hand-container {
+  position: sticky;
+  bottom: 0;
 }
 </style>

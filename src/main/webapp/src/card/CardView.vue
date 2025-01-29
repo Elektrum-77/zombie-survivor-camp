@@ -13,21 +13,24 @@ const contentViews = {
 
 <template>
   <div class="card-layout">
-    <span style="font-weight: bold" v-text="value.name"/>
+    <span class="title" v-text="value.name"/>
     <span/>
     <component :is="contentViews[type]" v-bind="value"/>
   </div>
 </template>
 
 <style scoped>
+.title {
+  font-weight: bold;
+  font-size: 1rem;
+}
 .card-layout {
   background-color: white;
   padding: 8px;
   display: grid;
-  grid-template-rows: 1rem 6rem 1fr;
-  min-height: 250px;
-  max-width: 180px;
+  grid-template-rows: 2rem 10rem 7rem;
+  width: 15rem;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 </style>

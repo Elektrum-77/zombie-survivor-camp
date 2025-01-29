@@ -2,6 +2,8 @@
 import type { Card } from "@/card/Card.ts";
 import type { Camp } from "@/game.ts";
 import { type Action, isBuildable, isSearchable } from "@/Action.ts";
+import { Icon } from "@iconify/vue";
+import { ICON_ACTION_BUILD, ICON_ACTION_SEARCH } from "@/icon.ts";
 
 defineProps<{ camp: Camp, card: Card, index: number }>()
 defineEmits<{ action: [Action] }>()
@@ -9,6 +11,21 @@ defineEmits<{ action: [Action] }>()
 
 <template>
   <div class="row">
+    <Icon
+      v-if="isBuildable(camp, card)"
+      @click="$emit('action', { type: 'Construct', value: { index } })"
+      :icon="ICON_ACTION_BUILD"
+      width="2rem"
+      height="2rem"
+    />
+    <Icon
+      v-if="isSearchable(camp, card)"
+      @click="$emit('action', { type: 'Search', value: { index } })"
+      :icon="ICON_ACTION_SEARCH"
+      width="2rem"
+      height="2rem"
+    />
+    <!--
     <span
       v-if="isBuildable(camp, card)"
       @click="$emit('action', { type: 'Construct', value: { index } })">
@@ -19,6 +36,7 @@ defineEmits<{ action: [Action] }>()
       @click="$emit('action', { type: 'Search', value: { index } })">
       Fouiller
     </span>
+    -->
   </div>
 </template>
 

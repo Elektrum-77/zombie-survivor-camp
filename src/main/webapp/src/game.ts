@@ -22,7 +22,7 @@ export type Camp = {
   searches: readonly Card[]
 }
 
-type LobbyEvent = {
+export type LobbyEvent = {
   username: string
   state: "CONNECT" | "DISCONNECT" | "READY" | "UNREADY"
 }
@@ -40,3 +40,5 @@ export type Event = {
   type: "ConnectedPlayers",
   value: Record<string, boolean>
 }
+
+export type EventType = Event["type"]

@@ -9,7 +9,7 @@ defineEmits<{ action: [Action] }>()
 </script>
 
 <template>
-  <div class="row">
+  <div class="hand-layout row">
     <HandCard
       v-for="(card, index) in hand"
       :camp
@@ -20,5 +20,7 @@ defineEmits<{ action: [Action] }>()
 </template>
 
 <style scoped>
-
+.hand-layout {
+  height: 18rem;
+}
 </style>

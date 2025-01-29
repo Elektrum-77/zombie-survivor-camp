@@ -1,18 +1,37 @@
 <script setup lang="ts">
 import type { Building } from "@/card/Card.ts";
 import ResourceBankView from "@/ResourceBankView.vue";
+import { Icon } from "@iconify/vue";
+import { ICON_ACTION_BUILD, ICON_ACTION_SEARCH } from "@/icon.ts";
 
 defineProps<Building>()
 </script>
 
 <template>
-  <div class="col">
-    <span>cost : <ResourceBankView :bank="cost"/> </span>
-    <span>production : <ResourceBankView :bank="production"/> </span>
-    <span>search : <ResourceBankView :bank="search"/> </span>
+  <div class="building-layout col">
+    <div class="cost row">
+      <Icon :icon="ICON_ACTION_BUILD" color="red" width="2rem" height="2rem"/>
+      <ResourceBankView :bank="cost" opposite/>
+    </div>
+    <div class="production row">
+      <Icon :icon="ICON_ACTION_BUILD" width="2rem" height="2rem"/>
+      <ResourceBankView :bank="production"/>
+    </div>
+    <div class="search row">
+      <Icon :icon="ICON_ACTION_SEARCH" width="2rem" height="2rem"/>
+      <ResourceBankView :bank="search"/>
+    </div>
   </div>
 </template>
 
 <style scoped>
-
+.building-layout {
+  gap: 0.5rem;
+}
+.building-layout > div {
+  gap: 0;
+}
+.building-layout > div > *:first-child {
+  border-right: dashed;
+}
 </style>
