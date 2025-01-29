@@ -6,7 +6,7 @@ import static fr.ecoders.zombie.ResourceBank.Resource.PEOPLE;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import static java.util.function.Function.identity;
 import java.util.stream.Stream;
 
 public record Camp(
@@ -24,11 +24,14 @@ public record Camp(
   }
 
   public ResourceBank production() {
-    var searchCost = Stream.of(SEARCH_COST.multiply(searches().size()));
+    var searchCost = Stream.of(SEARCH_COST.multiply(-searches().size()));
     var production = buildings.stream()
       .map(Buildable::production);
-    return ResourceBank.sumAll(Stream.of(searchCost, production)
-      .flatMap(Function.identity()));
+    var searchProduction = searches.stream()
+      .map(Searchable::search);
+
+    var streams = Stream.of(searchCost, searchProduction, production);
+    return ResourceBank.sumAll(streams.flatMap(identity()));
   }
 
   Camp construct(Buildable buildable) {
