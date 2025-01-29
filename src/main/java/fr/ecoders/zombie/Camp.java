@@ -6,6 +6,7 @@ import static fr.ecoders.zombie.ResourceBank.Resource.PEOPLE;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import static java.util.function.Function.identity;
 import java.util.stream.Stream;
 
@@ -14,6 +15,24 @@ public record Camp(
   List<Buildable> buildings,
   List<Searchable> searches) {
   public static final ResourceBank SEARCH_COST = new ResourceBank(Map.of(PEOPLE, 1));
+
+  public Camp withSearches(List<Searchable> searches) {
+    return new Camp(maxBuildCount, buildings, List.copyOf(searches));
+  }
+
+  public Camp withBuildings(List<Buildable> buildings) {
+    return new Camp(maxBuildCount, List.copyOf(buildings), searches);
+  }
+
+  public Camp withMaxBuildCount(int maxBuildCount) {
+    if (maxBuildCount < 1) {
+      throw new IllegalArgumentException("maxBuildCount must be greater than 0");
+    }
+    if (maxBuildCount < buildings.size()) {
+      throw new IllegalStateException("maxBuildCount must be greater than the current count of buildings");
+    }
+    return new Camp(maxBuildCount, buildings, searches);
+  }
 
   public int availableSpace() {
     return buildings.size() - maxBuildCount;
@@ -43,7 +62,7 @@ public record Camp(
     }
     var buildings = new ArrayList<>(this.buildings);
     buildings.add(buildable);
-    return new Camp(maxBuildCount, buildings, searches);
+    return withBuildings(buildings);
   }
 
   Camp search(Searchable searchable) {
@@ -54,4 +73,5 @@ public record Camp(
     searches.add(searchable);
     return new Camp(maxBuildCount, buildings, searches);
   }
+
 }

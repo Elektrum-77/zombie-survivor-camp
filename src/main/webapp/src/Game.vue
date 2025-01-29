@@ -7,7 +7,7 @@ import type { Action, ActionType } from "@/Action.ts";
 import type { Card } from "@/card/Card.ts";
 import Hand from "@/Hand.vue";
 
-const {username} = defineProps<GameState & {username:string}>()
+const {currentPlayer: username} = defineProps<GameState & { isLoading?: boolean }>()
 const emit = defineEmits<{
   action: [action: Action]
 }>()
@@ -45,7 +45,7 @@ function validateActionAndCloseMenu(action: ActionType) {
       <h2>Camp</h2>
       <CampView v-bind="camps[selectedCamp]" />
     </div>
-    <div v-if="hand.length > 0" class="hand-container">
+    <div v-if="!isLoading" class="hand-container">
       <h2>Hand</h2>
       <Hand :camp="camps[username]" :hand @action="$emit('action', $event)"/>
 <!--      <div class="row">-->

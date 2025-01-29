@@ -5,6 +5,7 @@ import type { ResourceBank } from "@/ResourceBank.ts";
 export type GameState = {
   hand: Card[]
   camps: Record<string, Camp>
+  currentPlayer: string
 }
 
 export type LobbyPlayer = {

@@ -1,6 +1,7 @@
 package fr.ecoders.zombie.server;
 
-import fr.ecoders.zombie.GameState;
+import fr.ecoders.lobby.Lobby;
+import fr.ecoders.zombie.LocalGameState;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public sealed interface ServerEvent {
     }
   }
 
-  record ConnectedPlayers(Map<String, Boolean> players) implements ServerEvent {}
+  record ConnectedPlayers(List<Lobby.Player> players) implements ServerEvent {}
 
-  record GameStateWrapper(GameState state) implements ServerEvent {}
+  record GameStateWrapper(LocalGameState state) implements ServerEvent {}
 }

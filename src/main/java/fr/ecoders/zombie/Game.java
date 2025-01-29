@@ -1,7 +1,7 @@
 package fr.ecoders.zombie;
 
 import static fr.ecoders.zombie.Card.CARDS;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -9,86 +9,117 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
+import java.util.logging.Logger;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public final class Game {
-  private final HashMap<String, Camp> camps;
-  private final HashMap<String, Player.Handler> activeHandlers;
+  private static final Logger LOGGER = Logger.getLogger(Game.class.getName());
+  private final LinkedHashMap<String, Camp> camps;
+  private final LinkedHashMap<String, Player.Handler> activeHandlers;
   private final Stack stack;
 
-  private Game(HashMap<String, Camp> camps, HashMap<String, Player.Handler> activeHandlers, Stack stack) {
+  private Game(LinkedHashMap<String, Camp> camps, LinkedHashMap<String, Player.Handler> activeHandlers, Stack stack) {
     this.camps = camps;
     this.activeHandlers = activeHandlers;
     this.stack = stack;
   }
 
-  public static void start(Map<String, Player> players, int minPlayerCount) throws InterruptedException {
-    players = Map.copyOf(players);
-    var camps = players.entrySet()
-      .stream()
-      .collect(toMap(Map.Entry::getKey, e -> e.getValue().camp, (_1, _2) -> null, HashMap::new));
-    var handlers = players.entrySet()
-      .stream()
-      .collect(toMap(Map.Entry::getKey, e -> e.getValue().handler, (_1, _2) -> null, HashMap::new));
-    var game = new Game(camps, handlers, new Stack(CARDS));
+  public static void start(List<PlayerInfo> infos, int minPlayerCount) throws InterruptedException {
+    infos = List.copyOf(infos);
+    if (minPlayerCount < 1) {
+      throw new IllegalArgumentException("minPlayerCount must be greater than 0");
+    }
+    var distinctNameCount = infos.stream()
+      .map(PlayerInfo::name)
+      .distinct()
+      .count();
+    if (distinctNameCount != infos.size()) {
+      throw new IllegalArgumentException("Some players have the same name");
+    }
 
+    var camps = infos.stream()
+      .collect(toMap(PlayerInfo::name, PlayerInfo::camp, (_1, _2) -> null, LinkedHashMap::new));
+    var handlers = infos.stream()
+      .collect(toMap(PlayerInfo::name, PlayerInfo::handler, (_1, _2) -> null, LinkedHashMap::new));
+    var game = new Game(camps, handlers, new Stack(CARDS));
+    LOGGER.info("Turn evaluation order defined as " + handlers.keySet());
 
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
-      while (!game.isFinished()) {
+      while (!game.isFinished() && !Thread.interrupted()) {
         var activeHandlers = game.activeHandlers();
         if (activeHandlers.size() < minPlayerCount) {
+          LOGGER.info("not enough players to continue, stopping game");
           return;
         }
 
-        // ask all active players to choose an action
+        // build all players' turn
         var futures = game.activeHandlers()
           .entrySet()
           .stream()
-          .collect(toUnmodifiableMap(
-            Map.Entry::getKey,
-            e -> {
-              var name = e.getKey();
-              var handler = e.getValue();
-              return AskAction.asking(handler, game.gameState(name), executor);
-            }));
+          .map(e -> {
+            var name = e.getKey();
+            var handler = e.getValue();
+            return AskAction.asking(handler, game.gameState(name), executor);
+          })
+          .toList();
 
-        // apply all actions
-        for (var e : futures.entrySet()) {
-          var username = e.getKey();
+        // apply all turns
+        for (var o : futures) {
+          var localGameState = o.localGameState();
+          var username = localGameState.currentPlayer();
+          var future = o.answer();
           try {
-            var asking = e.getValue();
-            var answer = asking.answer();
-            var gameState = asking.gameState();
-            var action = answer.get();
-            action.play(game, gameState.hand(), username);
+            var turn = future.get();
+            turn.play(game);
           } catch (ExecutionException ex) {
             game.activeHandlers.remove(username);
-            throw new AssertionError("An error occurred while waiting for " + username + "'s action", ex);
+            game.discardAll(localGameState.hand());
+            var cause = ex.getCause();
+            if (!(cause instanceof InterruptedException)) {
+              throw new AssertionError("An error occurred while waiting for " + username + "'s action", cause);
+            }
           }
         }
       }
     }
   }
 
+  private LocalGameState gameState(String player) {
+    return new LocalGameState(camps, stack.draw(3), player);
+  }
+
   private Map<String, Player.Handler> activeHandlers() {
     return Map.copyOf(activeHandlers);
   }
 
-  private GameState gameState(String player) {
-    return new GameState(camps, stack.draw(3), player);
+  public record PlayerInfo(
+    String name,
+    Camp camp,
+    Player.Handler handler
+  ) {
+    public PlayerInfo {
+      Objects.requireNonNull(name);
+      Objects.requireNonNull(camp);
+      Objects.requireNonNull(handler);
+    }
   }
 
-  public void updateCamp(String player, UnaryOperator<Camp> updater) {
-    Objects.requireNonNull(player);
-    Objects.requireNonNull(updater);
-    if (!camps.containsKey(player)) {
-      throw new IllegalArgumentException("Player " + player + " does not exist");
+  public Camp camp(String username) {
+    if (!camps.containsKey(username)) {
+      throw new IllegalArgumentException("Player " + username + " does not exist");
     }
-    var camp = camps.get(player);
-    camps.replace(player, updater.apply(camp));
+    return camps.get(username);
+  }
+
+  public void setCamp(String username, Camp camp) {
+    Objects.requireNonNull(username);
+    Objects.requireNonNull(camp);
+    if (!camps.containsKey(username)) {
+      throw new IllegalArgumentException("Player " + username + " does not exist");
+    }
+    camps.put(username, camp);
   }
 
   public void discardAll(List<Card> cards) {
@@ -96,27 +127,11 @@ public final class Game {
     stack.discardAll(cards);
   }
 
-  public record Player(
-    String name,
-    Camp camp,
-    Handler handler) {
-    public Player {
-      Objects.requireNonNull(name);
-      Objects.requireNonNull(camp);
-      Objects.requireNonNull(handler);
-    }
-
-    @FunctionalInterface
-    public interface Handler {
-      Action askAction(GameState gs) throws InterruptedException;
-    }
-  }
-
   private record AskAction(
-    GameState gameState,
-    Future<Action> answer) {
-    private static AskAction asking(Player.Handler handler, GameState gameState, ExecutorService executor) {
-      return new AskAction(gameState, executor.submit(() -> handler.askAction(gameState)));
+    LocalGameState localGameState,
+    Future<PlayerTurn> answer) {
+    private static AskAction asking(Player.Handler handler, LocalGameState localGameState, ExecutorService executor) {
+      return new AskAction(localGameState, executor.submit(() -> handler.buildTurn(localGameState)));
     }
   }
 

@@ -1,18 +1,26 @@
 package fr.ecoders.lobby;
 
 import java.util.HashSet;
-import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public final class Lobby {
-  private final HashSet<String> players = new HashSet<>();
+  private final LinkedHashSet<String> players = new LinkedHashSet<>();
   private final HashSet<String> ready = new HashSet<>();
 
-  public Map<String, Boolean> players() {
+  public List<Player> players() {
     return players.stream()
-      .collect(toUnmodifiableMap(identity(), ready::contains));
+      .map(username -> new Player(username, isReady(username)))
+      .toList();
+  }
+
+  public record Player(
+    String username,
+    boolean isReady) {
+    public Player {
+      Objects.requireNonNull(username);
+    }
   }
 
   public boolean isReady(String player) {

@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.Card;
 import fr.ecoders.zombie.ResourceBank;
@@ -170,23 +169,25 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         return switch (type) {
           case "ChatMessage" -> new PlayerCommand.ChatMessage(valueNode.asText());
           case "LobbyCommand" -> context.readTreeAsValue(valueNode, PlayerCommand.LobbyCommand.class);
-          case "Action" -> new PlayerCommand.ActionWrapper(context.readTreeAsValue(valueNode, Action.class));
+          case "Action" -> context.readTreeAsValue(valueNode, PlayerCommand.Action.class);
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
       }
     };
-  private static final JsonDeserializer<Action> ACTION_JSON_DESERIALIZER =
-    new StdDeserializer<>(Action.class) {
+  private static final JsonDeserializer<PlayerCommand.Action> ACTION_JSON_DESERIALIZER =
+    new StdDeserializer<>(PlayerCommand.Action.class) {
       @Override
-      public Action deserialize(JsonParser jsonParser, DeserializationContext context)
+      public PlayerCommand.Action deserialize(JsonParser jsonParser, DeserializationContext context)
       throws IOException {
         var codec = jsonParser.getCodec();
         var root = (JsonNode) codec.readTree(jsonParser);
         var typeNode = root.get("type");
         var type = typeNode.asText();
         var clazz = switch (type) {
-          case "Construct" -> Action.Construct.class;
-          case "Search" -> Action.Search.class;
+          case "DestroyBuilding" -> PlayerCommand.Action.DestroyBuilding.class;
+          case "CancelSearch" -> PlayerCommand.Action.CancelSearch.class;
+          case "Construct" -> PlayerCommand.Action.Construct.class;
+          case "Search" -> PlayerCommand.Action.Search.class;
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
         var valueNode = root.get("value");
@@ -214,7 +215,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
 
     module.addDeserializer(Instant.class, INSTANT_JSON_DESERIALIZER);
     module.addDeserializer(PlayerCommand.class, PLAYER_COMMAND_JSON_DESERIALIZER);
-    module.addDeserializer(Action.class, ACTION_JSON_DESERIALIZER);
+    module.addDeserializer(PlayerCommand.Action.class, ACTION_JSON_DESERIALIZER);
 
     mapper.registerModule(module);
   }

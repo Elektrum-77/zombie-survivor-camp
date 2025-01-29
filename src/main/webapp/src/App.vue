@@ -15,9 +15,10 @@ watch(username, v => localStorage.setItem("username", v))
 
 const players = ref<Record<string, boolean>>({})
 
-const connected = shallowRef<boolean>(false)
 const messages = shallowRef<Message[]>([])
 const gameState = shallowRef<GameState>()
+const connected = ref(false)
+const isLoading = ref(true)
 
 function addMessage(msg: Message) {
   messages.value = [...messages.value, msg]
@@ -72,6 +73,7 @@ function onConnect(s: WebSocket) {
         break
       case "GameState":
         gameState.value = parsed.value
+        isLoading.value = false
         break
       case "ConnectedPlayers":
         players.value = parsed.value
@@ -90,6 +92,7 @@ function setReady(ready: boolean) {
 
 function sendAction(action: Action) {
   socket.value?.send(JSON.stringify({type: "Action", value: action}))
+  isLoading.value = socket.value !== undefined
 }
 
 useEventListener("unload", () => socket.value?.close())
@@ -101,12 +104,7 @@ useEventListener("unload", () => socket.value?.close())
     <div class="layout">
       <Login v-if="!connected" v-model:username="username" @connected="onConnect"/>
       <Lobby v-else-if="gameState===undefined" :players="players" @ready="setReady($event)"/>
-      <Game v-else
-            :hand="gameState.hand"
-            :camps="gameState.camps"
-            :username="username"
-            @action="sendAction($event)"
-      />
+      <Game v-else v-bind="gameState" @action="sendAction($event)" :is-loading/>
       <Chat class="chat" :messages="messages" @send="sendChatMessage" />
     </div>
   </div>

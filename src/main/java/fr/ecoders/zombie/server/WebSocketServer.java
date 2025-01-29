@@ -1,6 +1,5 @@
 package fr.ecoders.zombie.server;
 
-import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.server.WebSocketServerState.InGame;
 import fr.ecoders.zombie.server.WebSocketServerState.InLobby;
 import io.quarkus.runtime.StartupEvent;
@@ -24,9 +23,9 @@ import java.util.logging.Logger;
 @WebSocket(path = "game/{username}")
 public class WebSocketServer {
   private static final Logger LOGGER = Logger.getLogger(WebSocketServer.class.getName());
-  public static final int MIN_PLAYER_COUNT = 2;
+  public static final int MIN_PLAYER_COUNT = 1;
   static final TypedKey<Thread> ACTION_THREAD_KEY = new TypedKey<>("action_thread");
-  static final TypedKey<SynchronousQueue<Action>> ACTION_QUEUE_KEY = new TypedKey<>("action_queue");
+  static final TypedKey<SynchronousQueue<PlayerCommand.Action>> ACTION_QUEUE_KEY = new TypedKey<>("action_queue");
   static final TypedKey<String> USERNAME_KEY = TypedKey.forString("username");
   private final Object lock = new Object();
   volatile private WebSocketServerState state;
@@ -89,10 +88,13 @@ public class WebSocketServer {
     switch (command) {
       case PlayerCommand.ChatMessage(String text) -> connection.broadcast()
         .sendTextAndAwait(new ServerEvent.ChatMessage(username, text, Instant.now()));
-      case PlayerCommand.ActionWrapper(Action action) when state instanceof InGame inGame ->
+      case PlayerCommand.Action action when state instanceof InGame inGame ->
         inGame.onAction(connection, action);
       case PlayerCommand.LobbyCommand cmd when state instanceof InLobby inLobby -> inLobby.onMessage(connection, cmd);
-      default -> throw new IllegalStateException("Player " + username + " sent " + command + " at the wrong time");
+      default -> {
+        connection.closeAndAwait();
+        throw new IllegalStateException("Player " + username + " sent " + command + " at the wrong time");
+      }
     }
   }
 

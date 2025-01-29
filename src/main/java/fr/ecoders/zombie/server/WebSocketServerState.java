@@ -1,11 +1,11 @@
 package fr.ecoders.zombie.server;
 
 import fr.ecoders.lobby.Lobby;
-import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.Card;
 import fr.ecoders.zombie.Game;
-import fr.ecoders.zombie.Game.Player;
+import fr.ecoders.zombie.Player;
+import fr.ecoders.zombie.PlayerTurn;
 import fr.ecoders.zombie.server.ServerEvent.LobbyEvent;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_QUEUE_KEY;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_THREAD_KEY;
@@ -16,6 +16,7 @@ import io.quarkus.websockets.next.WebSocketConnection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.SynchronousQueue;
+import java.util.logging.Logger;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 
 public sealed interface WebSocketServerState {
@@ -86,37 +87,43 @@ public sealed interface WebSocketServerState {
   final class InGame implements WebSocketServerState {
     private static final String ALREADY_PLAYED = "ALREADY_PLAYED";
 
-    private static Player player(WebSocketConnection connection) {
-      var queue = new SynchronousQueue<Action>();
+    private static Game.PlayerInfo player(WebSocketConnection connection) {
+      var queue = new SynchronousQueue<PlayerCommand.Action>();
       var userdata = connection.userData();
       var username = userdata.get(USERNAME_KEY);
       var camp = new Camp(6, List.of(Card.CAMPING_TENT, Card.RAIN_COLLECTORS, Card.VEGETABLE_GARDEN), List.of());
       userdata.put(ACTION_QUEUE_KEY, queue);
-      Player.Handler handler = gs -> {
+      Player.Handler handler = state -> {
         if (connection.isClosed()) {
           throw new InterruptedException();
         }
         userdata.put(ACTION_THREAD_KEY, Thread.currentThread());
-        connection.sendTextAndAwait(new ServerEvent.GameStateWrapper(gs));
-        var action = queue.take();
+        var turnBuilder = PlayerTurn.with();
+        connection.sendTextAndAwait(new ServerEvent.GameStateWrapper(state));
+        while (!turnBuilder.isDone()) {
+          state = switch (queue.take()) {
+            case PlayerCommand.CancelSearch(int index) -> turnBuilder.cancelSearch(state, index);
+            case PlayerCommand.DestroyBuilding(int index) -> turnBuilder.destroyBuilding(state, index);
+            case PlayerCommand.Construct(int index) -> turnBuilder.construct(state, index);
+            case PlayerCommand.Search(int index) -> turnBuilder.search(state, index);
+          };
+          connection.sendTextAndAwait(new ServerEvent.GameStateWrapper(state));
+        }
         userdata.remove(ACTION_THREAD_KEY);
-        return action;
+        return turnBuilder.build();
       };
-      return new Player(username, camp, handler);
+      return new Game.PlayerInfo(username, camp, handler);
     }
 
     public static void start(OpenConnections connections) throws InterruptedException {
       Objects.requireNonNull(connections);
       var players = connections.stream()
-        .collect(toUnmodifiableMap(
-          c -> {
-            var userdata = c.userData();
-            return userdata.get(USERNAME_KEY);
-          }, InGame::player));
+        .map(InGame::player)
+        .toList();
       Game.start(players, MIN_PLAYER_COUNT);
     }
 
-    public void onAction(WebSocketConnection connection, Action action) {
+    public void onAction(WebSocketConnection connection, PlayerCommand.Action action) {
       var userdata = connection.userData();
       var queue = userdata.get(ACTION_QUEUE_KEY);
       if (queue == null) {

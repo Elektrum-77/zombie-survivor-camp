@@ -1,7 +1,5 @@
 package fr.ecoders.zombie.server;
 
-import fr.ecoders.zombie.Action;
-
 public sealed interface PlayerCommand {
   enum LobbyCommand implements PlayerCommand {
     READY,
@@ -10,5 +8,9 @@ public sealed interface PlayerCommand {
 
   record ChatMessage(String text) implements PlayerCommand {}
 
-  record ActionWrapper(Action action) implements PlayerCommand {}
+  sealed interface Action extends PlayerCommand {}
+  record DestroyBuilding(int index) implements Action {}
+  record CancelSearch(int index) implements Action {}
+  record Construct(int index) implements Action {}
+  record Search(int index) implements Action {}
 }

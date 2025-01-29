@@ -2,7 +2,7 @@
 import type { ResourceBank } from "@/ResourceBank.ts";
 import ResourceView from "@/ResourceView.vue";
 
-defineProps<{ opposite: boolean, bank: ResourceBank }>()
+defineProps<{ opposite?: boolean, bank: ResourceBank }>()
 </script>
 
 <template>

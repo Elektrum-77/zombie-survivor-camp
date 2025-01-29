@@ -8,7 +8,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview --outDir ../resources/META-INF/resources",
     "watch": "vite build --watch --emptyOutDir --outDir ../resources/META-INF/resources",
-    "build-only": "vite build --outDir ../resources/META-INF/resources",
+    "build-only": "vite build --emptyOutDir --outDir ../resources/META-INF/resources",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix"
   },
