@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { GameState } from "@/game.ts";
 import CampSelector from "@/CampSelector.vue";
-import { computed, ref, shallowRef, watch } from "vue";
+import { ref, shallowRef } from "vue";
 import CampView from "@/CampView.vue";
 import type { ActionType, HandCardAction } from "@/Action.ts";
 import type { Card } from "@/card/Card.ts";
@@ -76,11 +76,13 @@ function validateActionAndCloseMenu(action: ActionType) {
   display: grid;
   grid-template-rows: auto 1fr auto;
   max-height: 100vh;
-  overflow-y: auto;
 }
 
-.hand-container {
-  position: sticky;
-  bottom: 0;
+.game-layout > * {
+  padding: 1rem;
+}
+
+.camp-container {
+  overflow: auto;
 }
 </style>

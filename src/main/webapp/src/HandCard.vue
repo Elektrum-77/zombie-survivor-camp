@@ -15,15 +15,19 @@ const focused = computed(()=>hovered.value||clicked.value)
 </script>
 
 <template>
-  <div class="col" v-element-hover="v=>hovered=v">
-    <ActionSelector
-      class="action-selector"
-      v-if="focused"
-      :camp
-      :card
-      :index
-      @action="$emit('action', $event)"
-    />
+  <div class="hand-card" v-element-hover="v=>hovered=v">
+    <div>
+      <Transition name="fade">
+        <ActionSelector
+          class="action-selector"
+          v-if="focused"
+          :camp
+          :card
+          :index
+          @action="$emit('action', $event)"
+        />
+      </Transition>
+    </div>
     <CardView
       v-bind="card"
       @click="clicked=true"
@@ -35,7 +39,10 @@ const focused = computed(()=>hovered.value||clicked.value)
 </template>
 
 <style scoped>
-
+.hand-card {
+  display: grid;
+  grid-template-rows: 2rem 1fr;
+}
 
 .card {
   cursor: pointer;
@@ -43,7 +50,14 @@ const focused = computed(()=>hovered.value||clicked.value)
 }
 
 .card[focused=true] {
-  transform: scale(1.05);
+  transform: translateY(0.5rem);
   box-shadow: 0 0 32px rgba(0, 0, 0, 0.1);
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.25s ease-in-out;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

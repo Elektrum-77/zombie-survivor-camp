@@ -20,7 +20,4 @@ defineEmits<{ action: [HandCardAction] }>()
 </template>
 
 <style scoped>
-.hand-layout {
-  height: 18rem;
-}
 </style>

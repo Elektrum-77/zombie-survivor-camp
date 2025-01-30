@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import type { Camp } from "@/game.ts";
 import Card from "@/card/CardView.vue";
-import { ref } from "vue";
 import ResourceBankView from "@/ResourceBankView.vue";
 
 defineProps<Camp>()
-const displayBuilding = ref(false)
 </script>
 
 <template>
   <div class="camp-layout">
     <div class="stats">
-      <h3>Nombre de constructions maximum</h3>
-      <p v-text="maxBuildCount"/>
-      <h3>Production total : </h3>
-      <ResourceBankView :bank="production"/>
+      <h3>Nombre de constructions: {{buildings.length}} / {{maxBuildCount}}</h3>
+      <div class="row">
+        <h3>Production totale : </h3>
+        <ResourceBankView :bank="production"/>
+      </div>
     </div>
     <div class="buildings">
       <h3>Bâtiments</h3>

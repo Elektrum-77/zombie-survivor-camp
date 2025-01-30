@@ -43,6 +43,15 @@ defineEmits<{ action: [HandCardAction] }>()
 <style scoped>
 div {
   align-items: stretch;
-  justify-content: space-around;
+  justify-content: center;
+}
+
+div > * {
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+div > *:hover {
+  transform: translateY(-0.5rem);
 }
 </style>

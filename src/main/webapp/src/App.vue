@@ -115,6 +115,7 @@ useEventListener("unload", () => socket.value?.close())
   display: grid;
   width: 100%;
   height: 100%;
+  max-height: 100%;
   grid-template-columns: 1fr 20vw;
   background-color: #f8f8f8;
 }
