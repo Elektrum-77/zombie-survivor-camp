@@ -2,10 +2,10 @@
 import type { Card } from "@/card/Card.ts";
 import type { Camp } from "@/game.ts";
 import HandCard from "@/HandCard.vue";
-import type { Action } from "@/Action.ts";
+import type { HandCardAction } from "@/Action.ts";
 
 defineProps<{ camp: Camp, hand: readonly Card[] }>()
-defineEmits<{ action: [Action] }>()
+defineEmits<{ action: [HandCardAction] }>()
 </script>
 
 <template>

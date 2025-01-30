@@ -6,7 +6,7 @@ import { now, useEventListener } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
 import type { Event, GameState } from "@/game.ts";
-import type { Action } from "@/Action.ts";
+import type { HandCardAction } from "@/Action.ts";
 
 
 const socket = shallowRef<WebSocket>()
@@ -90,7 +90,7 @@ function setReady(ready: boolean) {
   socket.value?.send(JSON.stringify({type: "LobbyCommand", value: ready ? "READY" : "UNREADY"}))
 }
 
-function sendAction(action: Action) {
+function sendAction(action: HandCardAction) {
   socket.value?.send(JSON.stringify({type: "Action", value: action}))
   isLoading.value = socket.value !== undefined
 }

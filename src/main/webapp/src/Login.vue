@@ -7,6 +7,7 @@ const location = useBrowserLocation()
 
 function connect(username: string): WebSocket {
   // const url = `ws://${location.value.host}/game/${username}`
+  // const url = `ws://88.124.177.238:49152/game/${username}`
   const url = `ws://localhost:49152/game/${username}`
   console.log(`Connecting to ${url}`)
   return new WebSocket(url)

@@ -1,9 +1,10 @@
 import type { Message } from "@/Chat.vue";
 import type { Card } from "@/card/Card.ts";
 import type { ResourceBank } from "@/ResourceBank.ts";
+import type { HandCardAction } from "@/Action.ts";
 
 export type GameState = {
-  hand: Card[]
+  hand: { card: Card, actions: [HandCardAction] }[]
   camps: Record<string, Camp>
   currentPlayer: string
 }

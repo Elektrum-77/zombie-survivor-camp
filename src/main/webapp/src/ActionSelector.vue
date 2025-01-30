@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { Card } from "@/card/Card.ts";
 import type { Camp } from "@/game.ts";
-import { type Action, isBuildable, isSearchable } from "@/Action.ts";
+import { type HandCardAction, isBuildable, isSearchable } from "@/Action.ts";
 import { Icon } from "@iconify/vue";
 import { ICON_ACTION_BUILD, ICON_ACTION_SEARCH } from "@/icon.ts";
 
 defineProps<{ camp: Camp, card: Card, index: number }>()
-defineEmits<{ action: [Action] }>()
+defineEmits<{ action: [HandCardAction] }>()
 </script>
 
 <template>

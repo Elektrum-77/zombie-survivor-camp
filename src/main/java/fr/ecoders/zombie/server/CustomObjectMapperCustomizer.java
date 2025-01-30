@@ -120,10 +120,18 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       public void serialize(ServerEvent.GameStateWrapper stateWrapper, JsonGenerator generator,
         SerializerProvider provider)
       throws IOException {
+        var state = stateWrapper.state();
         generator.writeStartObject();
         generator.writeStringField("type", "GameState");
         generator.writeFieldName("value");
-        provider.defaultSerializeValue(stateWrapper.state(), generator);
+        generator.writeStartObject();
+        generator.writeFieldName("camps");
+        provider.defaultSerializeValue(state.camps(), generator);
+        generator.writeFieldName("currentPlayer");
+        provider.defaultSerializeValue(state.currentPlayer(), generator);
+        generator.writeFieldName("hand");
+        provider.defaultSerializeValue(CardWithAction.handWithAction(state), generator);
+        generator.writeEndObject();
         generator.writeEndObject();
       }
     };

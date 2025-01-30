@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import type { GameState } from "@/game.ts";
 import CampSelector from "@/CampSelector.vue";
-import { ref, shallowRef } from "vue";
+import { computed, ref, shallowRef, watch } from "vue";
 import CampView from "@/CampView.vue";
-import type { Action, ActionType } from "@/Action.ts";
+import type { ActionType, HandCardAction } from "@/Action.ts";
 import type { Card } from "@/card/Card.ts";
 import Hand from "@/Hand.vue";
 
 const {currentPlayer: username} = defineProps<GameState & { isLoading?: boolean }>()
 const emit = defineEmits<{
-  action: [action: Action]
+  action: [action: HandCardAction]
 }>()
 
 const selectedCamp = ref<string>(username)
@@ -34,6 +34,7 @@ function validateActionAndCloseMenu(action: ActionType) {
   emit("action", {type: action, value: {index: selectedCard.value.index}})
   closeContextualMenu()
 }
+
 </script>
 
 <template>
@@ -47,7 +48,11 @@ function validateActionAndCloseMenu(action: ActionType) {
     </div>
     <div v-if="!isLoading" class="hand-container">
       <h2>Hand</h2>
-      <Hand :camp="camps[username]" :hand @action="$emit('action', $event)"/>
+      <Hand
+        :camp="camps[username]"
+        :hand="hand.map(c=>c.card)"
+        @action="$emit('action',$event)"
+      />
 <!--      <div class="row">-->
 <!--        <CardView-->
 <!--          v-for="(card, i) in hand"-->

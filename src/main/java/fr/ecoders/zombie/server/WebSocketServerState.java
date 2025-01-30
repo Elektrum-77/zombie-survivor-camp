@@ -102,10 +102,10 @@ public sealed interface WebSocketServerState {
         connection.sendTextAndAwait(new ServerEvent.GameStateWrapper(state));
         while (!turnBuilder.isDone()) {
           state = switch (queue.take()) {
-            case PlayerCommand.CancelSearch(int index) -> turnBuilder.cancelSearch(state, index);
-            case PlayerCommand.DestroyBuilding(int index) -> turnBuilder.destroyBuilding(state, index);
-            case PlayerCommand.Construct(int index) -> turnBuilder.construct(state, index);
-            case PlayerCommand.Search(int index) -> turnBuilder.search(state, index);
+            case PlayerCommand.Action.CancelSearch(int index) -> turnBuilder.cancelSearch(state, index);
+            case PlayerCommand.Action.DestroyBuilding(int index) -> turnBuilder.destroyBuilding(state, index);
+            case PlayerCommand.Action.Construct(int index) -> turnBuilder.construct(state, index);
+            case PlayerCommand.Action.Search(int index) -> turnBuilder.search(state, index);
           };
           connection.sendTextAndAwait(new ServerEvent.GameStateWrapper(state));
         }

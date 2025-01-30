@@ -4,11 +4,11 @@ import { computed, ref } from "vue";
 import ActionSelector from "@/ActionSelector.vue";
 import type { Camp } from "@/game.ts";
 import CardView from "@/card/CardView.vue";
-import type { Action } from "@/Action.ts";
+import type { HandCardAction } from "@/Action.ts";
 import { vElementHover, vOnClickOutside } from "@vueuse/components";
 
 defineProps<{ camp: Camp, card: Card, index:number }>()
-defineEmits<{action: [Action]}>()
+defineEmits<{action: [HandCardAction]}>()
 const hovered = ref(false)
 const clicked = ref(false)
 const focused = computed(()=>hovered.value||clicked.value)

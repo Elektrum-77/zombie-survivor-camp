@@ -2,7 +2,7 @@ import type { Camp } from "@/game.ts";
 import type { Card } from "@/card/Card.ts";
 import { bankContainsAll } from "@/ResourceBank.ts";
 
-export type Action = {
+export type HandCardAction = {
   type: "Construct"
   value: {
     index: number
@@ -14,7 +14,7 @@ export type Action = {
   }
 }
 
-export type ActionType = Action["type"]
+export type ActionType = HandCardAction["type"]
 
 export function isSearchable(camp: Camp, card: Card): boolean {
   switch (card.type) {
