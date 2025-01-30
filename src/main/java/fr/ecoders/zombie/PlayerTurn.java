@@ -1,6 +1,7 @@
 package fr.ecoders.zombie;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -106,7 +107,8 @@ public final class PlayerTurn {
         throw new IllegalArgumentException("card (" + card + ") is not buildable");
       }
 
-      state = state.withCamp(PlayerTurn.construct(camp, buildable));
+      state = state.withCamp(PlayerTurn.construct(camp, buildable))
+        .withHand(List.of());
       consumer = consumer.andThen(game -> {
         game.setCamp(username, PlayerTurn.construct(game.camp(username), buildable));
         game.discardAll(hand);
@@ -129,7 +131,8 @@ public final class PlayerTurn {
         throw new IllegalArgumentException("card (" + card + ") is not searchable");
       }
 
-      state = state.withCamp(PlayerTurn.search(camp, searchable));
+      state = state.withCamp(PlayerTurn.search(camp, searchable))
+        .withHand(List.of());
       consumer = consumer.andThen(game -> {
         game.setCamp(username, PlayerTurn.search(game.camp(username), searchable));
         game.discardAll(hand);
