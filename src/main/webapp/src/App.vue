@@ -5,7 +5,7 @@ import { useLocalStorage, useWebSocket } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
 import { type Event, useChat, useGame, useLobby } from "@/game.ts";
-import type { HandCardAction } from "@/Action.ts";
+import type {Action} from "@/Action.ts";
 
 const username = useLocalStorage("username", "")
 
@@ -63,7 +63,7 @@ function setReady(ready: boolean) {
   send(JSON.stringify({type: "LobbyCommand", value: ready ? "READY" : "UNREADY"}))
 }
 
-function sendAction(action: HandCardAction) {
+function sendAction(action: Action) {
   send(JSON.stringify({type: "Action", value: action}))
 }
 

@@ -7,11 +7,11 @@ import { vElementHover, vOnClickOutside } from "@vueuse/components";
 import ActionList from "@/ActionList.vue";
 import { ICON_ACTION } from "@/icon.ts";
 
-defineProps<{ card: Card, index: number, actions: Action[] }>()
+defineProps<{ card: Card, actions: Action[] }>()
 defineEmits<{action: [Action]}>()
 const hovered = ref(false)
 const clicked = ref(false)
-const focused = computed(()=>hovered.value||clicked.value)
+const focused = computed(() => hovered.value || clicked.value)
 </script>
 
 <template>

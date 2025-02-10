@@ -2,7 +2,7 @@
 import type { GameState } from "@/game.ts";
 import CampSelector from "@/CampSelector.vue";
 import CampView from "@/CampView.vue";
-import type { HandCardAction } from "@/Action.ts";
+import type {Action} from "@/Action.ts";
 import HandView from "@/HandView.vue";
 import {ref, shallowRef} from "vue";
 import {onKeyStroke} from "@vueuse/core";
@@ -12,7 +12,7 @@ const selectedUsername = ref<string>(state.currentPlayer)
 const showHand = shallowRef(true)
 
 defineEmits<{
-  action: [action: HandCardAction]
+  action: [action: Action]
 }>()
 
 onKeyStroke(" ", () => {
@@ -29,7 +29,7 @@ onKeyStroke(" ", () => {
     </div>
     <div class="camp-container">
       <h2>Camp</h2>
-      <CampView v-bind="state.camps[selectedUsername]"/>
+      <CampView v-bind="state.camps[selectedUsername]" @action="$emit('action',$event)"/>
     </div>
     <div v-show="state.hand.length > 0" class="hand-container">
       <HandView

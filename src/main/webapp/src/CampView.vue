@@ -24,7 +24,6 @@ defineEmits<{ action: Action[] }>()
         <CardViewAction
           v-for="(card, index) in buildings"
           :card
-          :index
           :actions="[{type: 'DestroyBuilding', value: {index}}]"
           @action="$emit('action', $event)"
         />

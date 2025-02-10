@@ -2,25 +2,23 @@ import type { Camp } from "@/game.ts";
 import type { Card } from "@/card/Card.ts";
 import { bankContainsAll } from "@/ResourceBank.ts";
 
-export type Action = HandCardAction | {
-  type: "DestroyBuilding"
-  value: {
-    index: number
-  }
-} | {
-  type: "CancelSearch"
-  value: {
-    index: number
-  }
-}
-
-export type HandCardAction = {
+export type Action = {
   type: "Construct"
   value: {
     index: number
   }
 } | {
   type: "Search"
+  value: {
+    index: number
+  }
+} | {
+  type: "DestroyBuilding"
+  value: {
+    index: number
+  }
+} | {
+  type: "CancelSearch"
   value: {
     index: number
   }
