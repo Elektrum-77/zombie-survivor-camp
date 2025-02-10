@@ -7,11 +7,13 @@ import fr.ecoders.zombie.server.PlayerCommand.Action;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_QUEUE_KEY;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_THREAD_KEY;
 import io.quarkus.websockets.next.WebSocketConnection;
+import java.util.Objects;
 
 public class WebSocketPlayerHandler implements Player.Handler {
   private final WebSocketConnection connection;
 
-  private WebSocketPlayerHandler(WebSocketConnection connection) {
+  public WebSocketPlayerHandler(WebSocketConnection connection) {
+    Objects.requireNonNull(connection);
     this.connection = connection;
   }
 

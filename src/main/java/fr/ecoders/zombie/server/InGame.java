@@ -22,7 +22,7 @@ public final class InGame implements WebSocketServerState {
     var username = userdata.get(USERNAME_KEY);
     var camp = new Camp(6, List.of(Card.CAMPING_TENT, Card.RAIN_COLLECTORS, Card.VEGETABLE_GARDEN), List.of());
     userdata.put(ACTION_QUEUE_KEY, queue);
-    var handler = WebSocketPlayerHandler.ofConnection(connection);
+    var handler = new WebSocketPlayerHandler(connection);
     return new Game.PlayerInfo(username, camp, handler);
   }
 
