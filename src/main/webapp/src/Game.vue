@@ -4,14 +4,20 @@ import CampSelector from "@/CampSelector.vue";
 import CampView from "@/CampView.vue";
 import type { HandCardAction } from "@/Action.ts";
 import HandView from "@/HandView.vue";
-import { ref } from "vue";
+import {ref, shallowRef} from "vue";
+import {onKeyStroke} from "@vueuse/core";
 
 const {state} = defineProps<{ state: GameState }>()
 const selectedUsername = ref<string>(state.currentPlayer)
+const showHand = shallowRef(true)
 
 defineEmits<{
   action: [action: HandCardAction]
 }>()
+
+onKeyStroke(" ", () => {
+  showHand.value = !showHand.value
+})
 </script>
 
 <template>
@@ -26,8 +32,9 @@ defineEmits<{
       <CampView v-bind="state.camps[selectedUsername]"/>
     </div>
     <div v-show="state.hand.length > 0" class="hand-container">
-      <h2>Hand</h2>
       <HandView
+        style="transition: all 0.2s"
+        :style="{transform: showHand ? 'none' : 'translateY(80%)'}"
         :camp="state.camps[state.currentPlayer]"
         :hand="state.hand"
         @action="$emit('action',$event)"
@@ -39,7 +46,7 @@ defineEmits<{
 <style scoped>
 .game-layout {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   max-height: 100vh;
 }
 
@@ -49,5 +56,13 @@ defineEmits<{
 
 .camp-container {
   overflow: auto;
+}
+
+.hand-container {
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  display: flex;
+  justify-content: center;
 }
 </style>
