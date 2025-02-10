@@ -4,7 +4,6 @@ import fr.ecoders.lobby.Lobby;
 import fr.ecoders.zombie.LocalGameState;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 public sealed interface ServerEvent {
   record ChatMessage(
@@ -27,6 +26,5 @@ public sealed interface ServerEvent {
 
   record TurnStart(LocalGameState state) implements ServerEvent {}
   record TurnEnd(LocalGameState state) implements ServerEvent {}
-
-  record GameStateWrapper(LocalGameState state) implements ServerEvent {}
+  record TurnUpdate(LocalGameState state) implements ServerEvent {}
 }

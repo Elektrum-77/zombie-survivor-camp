@@ -90,13 +90,16 @@ public class WebSocketServer {
   @OnTextMessage
   public void onMessage(PlayerCommand command) {
     var username = username();
-    switch (command) {
-      case PlayerCommand.ChatMessage(String text) -> broadcastChatMessage(username, text);
-      case Action action when state instanceof InGame inGame -> inGame.onAction(connection, action);
-      case LobbyCommand cmd when state instanceof InLobby inLobby -> inLobby.onMessage(connection, cmd);
-      default -> {
-        connection.closeAndAwait();
-        throw new IllegalStateException("Player " + username + " sent " + command + " at the wrong time");
+    synchronized (lock) {
+      switch (command) {
+        case PlayerCommand.ChatMessage(String text) -> broadcastChatMessage(username, text);
+        case Action action when state instanceof InGame inGame -> inGame.onAction(connection, action);
+        case LobbyCommand cmd when state instanceof InLobby inLobby -> inLobby.onMessage(connection, cmd);
+        default -> {
+          connection.closeAndAwait();
+          throw new IllegalStateException(
+            "Player " + username + " sent " + command + " at the wrong time (" + state + ")");
+        }
       }
     }
   }
@@ -104,10 +107,12 @@ public class WebSocketServer {
   @Blocking
   @OnClose
   public void onClose() {
-    switch (state) {
-      case InLobby inLobby -> inLobby.onClose(connection);
-      case InGame inGame -> inGame.onClose(connection);
-      case null -> { /* do nothing */ }
+    synchronized (lock) {
+      switch (state) {
+        case InLobby inLobby -> inLobby.onClose(connection);
+        case InGame inGame -> inGame.onClose(connection);
+        case null -> { /* do nothing */ }
+      }
     }
   }
 

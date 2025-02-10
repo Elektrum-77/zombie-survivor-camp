@@ -5,10 +5,8 @@ import fr.ecoders.zombie.Player;
 import fr.ecoders.zombie.PlayerTurn;
 import fr.ecoders.zombie.server.PlayerCommand.Action;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_QUEUE_KEY;
-import static fr.ecoders.zombie.server.WebSocketServer.ACTION_THREAD_KEY;
 import io.quarkus.websockets.next.WebSocketConnection;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.concurrent.SynchronousQueue;
 
 public class WebSocketPlayerHandler implements Player.Handler {
@@ -42,6 +40,9 @@ public class WebSocketPlayerHandler implements Player.Handler {
         case Action.DestroyBuilding(int index) -> turnBuilder.destroyBuilding(state, index);
         case Action.CancelSearch(int index) -> turnBuilder.cancelSearch(state, index);
       };
+      if (!turnBuilder.isDone()) {
+        connection.sendTextAndAwait(new ServerEvent.TurnUpdate(state));
+      }
     }
     connection.sendTextAndAwait(new ServerEvent.TurnEnd(state));
 //    userdata.remove(ACTION_THREAD_KEY);

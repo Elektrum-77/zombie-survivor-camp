@@ -131,15 +131,15 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeEndObject();
       }
     };
-  private static final JsonSerializer<ServerEvent.GameStateWrapper> GAME_STATE_WRAPPER_JSON_SERIALIZER =
-    new StdSerializer<>(ServerEvent.GameStateWrapper.class) {
+  private static final JsonSerializer<ServerEvent.TurnUpdate> TURN_UPDATE_JSON_SERIALIZER =
+    new StdSerializer<>(ServerEvent.TurnUpdate.class) {
       @Override
-      public void serialize(ServerEvent.GameStateWrapper stateWrapper, JsonGenerator generator,
+      public void serialize(ServerEvent.TurnUpdate stateWrapper, JsonGenerator generator,
         SerializerProvider provider)
       throws IOException {
         var state = stateWrapper.state();
         generator.writeStartObject();
-        generator.writeStringField("type", "GameState");
+        generator.writeStringField("type", "TurnUpdate");
         generator.writeFieldName("value");
         provider.defaultSerializeValue(state, generator);
         generator.writeEndObject();
@@ -278,7 +278,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ConnectedPlayers.class, CONNECTED_PLAYERS_JSON_SERIALIZER);
     module.addSerializer(LocalGameState.class, LOCAL_GAME_STATE_JSON_SERIALIZER);
-    module.addSerializer(ServerEvent.GameStateWrapper.class, GAME_STATE_WRAPPER_JSON_SERIALIZER);
+    module.addSerializer(ServerEvent.TurnUpdate.class, TURN_UPDATE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.TurnStart.class, TURN_START_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.TurnEnd.class, TURN_END_JSON_SERIALIZER);
     module.addSerializer(PlayerCommand.Action.class, ACTION_JSON_SERIALIZER);

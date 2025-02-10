@@ -1,12 +1,12 @@
 import type { Message } from "@/Chat.vue";
 import type { Card } from "@/card/Card.ts";
 import type { ResourceBank } from "@/ResourceBank.ts";
-import type { HandCardAction } from "@/Action.ts";
+import type { Action } from "@/Action.ts";
 import { ref, shallowRef } from "vue";
 import { now } from "@vueuse/core";
 
 export type GameState = {
-  hand: { card: Card, actions: [HandCardAction] }[]
+  hand: { card: Card, actions: [Action] }[]
   camps: Record<string, Camp>
   currentPlayer: string
 }
@@ -32,8 +32,8 @@ export type LobbyEventValue = {
   state: "CONNECT" | "DISCONNECT" | "READY" | "UNREADY"
   username: string
 }
-export type GameEvent = GameStateEvent | TurnStartEvent | TurnEndEvent
-export type GameStateEvent = { type: "GameState"; value: GameState }
+export type GameEvent = TurnUpdateEvent | TurnStartEvent | TurnEndEvent
+export type TurnUpdateEvent = { type: "TurnUpdate"; value: GameState }
 export type TurnStartEvent = { type: "TurnStart"; value: GameState }
 export type TurnEndEvent = { type: "TurnEnd"; value: GameState }
 export type ChatEvent = { type: "ChatMessage"; value: Message }
@@ -78,7 +78,7 @@ export function useGame() {
 
   function onMessage(event: GameEvent): void {
     switch (event.type) {
-      case "GameState":
+      case "TurnUpdate":
         state.value = event.value
         return
       case "TurnStart":
