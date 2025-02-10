@@ -31,13 +31,17 @@ onKeyStroke(" ", () => {
       <h2>Camp</h2>
       <CampView v-bind="state.camps[selectedUsername]" @action="$emit('action',$event)"/>
     </div>
-    <div v-show="state.hand.length > 0" class="hand-container">
+    <div
+      v-show="state.hand.length > 0"
+      class="hand-container"
+      :style="{gridTemplateRows: showHand ? '0 1fr' : '80% auto'}"
+    >
+      <div></div>
       <HandView
-        style="transition: all 0.2s"
-        :style="{transform: showHand ? 'none' : 'translateY(80%)'}"
         :camp="state.camps[state.currentPlayer]"
         :hand="state.hand"
         @action="$emit('action',$event)"
+        style="pointer-events: auto"
       />
     </div>
   </div>
@@ -62,7 +66,9 @@ onKeyStroke(" ", () => {
   position: absolute;
   bottom: 0;
   left: 25%;
-  display: flex;
+  display: grid;
   justify-content: center;
+  transition: all 0.2s;
+  pointer-events: none;
 }
 </style>
