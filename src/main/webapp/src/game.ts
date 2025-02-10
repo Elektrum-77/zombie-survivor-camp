@@ -76,19 +76,15 @@ export function useGame() {
   const players = ref<Record<string, boolean>>({})
   const isTurnDone = ref<boolean>(false)
 
-  function onMessage(event: GameEvent): void {
+  function onMessage(event: GameEvent): GameState {
     switch (event.type) {
-      case "TurnUpdate":
-        state.value = event.value
-        return
+      case "TurnUpdate": return state.value = event.value
       case "TurnStart":
         isTurnDone.value = false
-        state.value = event.value
-        return
+        return state.value = event.value
       case "TurnEnd":
         isTurnDone.value = true
-        state.value = event.value
-        return
+        return state.value = event.value
     }
   }
 

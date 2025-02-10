@@ -44,9 +44,9 @@ const {status, send, open} = useWebSocket(() =>
           case "LobbyEvent":
             onLobbyMessage(parsed)
             return
-          case "GameState":
           case "TurnStart":
           case "TurnEnd":
+          case "TurnUpdate":
             onGameMessage(parsed)
             return
         }
