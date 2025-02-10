@@ -167,7 +167,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       throws IOException {
         var state = stateWrapper.state();
         generator.writeStartObject();
-        generator.writeStringField("type", "TurnStart");
+        generator.writeStringField("type", "TurnEnd");
         generator.writeFieldName("value");
         provider.defaultSerializeValue(state, generator);
         generator.writeEndObject();

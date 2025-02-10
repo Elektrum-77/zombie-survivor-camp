@@ -14,6 +14,6 @@ public record Player(
 
   @FunctionalInterface
   public interface Handler {
-    PlayerTurn buildTurn(LocalGameState gs) throws InterruptedException;
+    PlayerTurn buildTurn(LocalGameState state) throws InterruptedException;
   }
 }
