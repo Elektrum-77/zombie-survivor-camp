@@ -31,8 +31,8 @@ public final class Lobby {
     return ready.contains(player);
   }
 
-  public boolean isEveryoneReady() {
-    return ready.size() == players.size();
+  public boolean isEveryoneReadyAndCount(int minPlayerSize) {
+    return ready.size() == players.size() && players.size() >= minPlayerSize;
   }
 
   /// returns false if this username is already used

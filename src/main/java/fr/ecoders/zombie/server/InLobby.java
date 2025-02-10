@@ -30,8 +30,7 @@ public final class InLobby implements WebSocketServerState {
 
   public void waitStart() throws InterruptedException {
     synchronized (lock) {
-      while (MIN_PLAYER_COUNT > lobby.players()
-        .size() || !lobby.isEveryoneReady()) {
+      while (!lobby.isEveryoneReadyAndCount(MIN_PLAYER_COUNT)) {
         lock.wait();
       }
     }
