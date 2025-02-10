@@ -1,45 +1,42 @@
 <script setup lang="ts">
 import type { Card } from "@/card/Card.ts";
 import { computed, ref } from "vue";
-import ActionSelector from "@/ActionSelector.vue";
-import type { Camp } from "@/game.ts";
 import CardView from "@/card/CardView.vue";
-import type { HandCardAction } from "@/Action.ts";
+import type { Action } from "@/Action.ts";
 import { vElementHover, vOnClickOutside } from "@vueuse/components";
+import ActionList from "@/ActionList.vue";
+import { ICON_ACTION } from "@/icon.ts";
 
-defineProps<{ camp: Camp, card: Card, index:number }>()
-defineEmits<{action: [HandCardAction]}>()
+defineProps<{ card: Card, index: number, actions: Action[] }>()
+defineEmits<{action: [Action]}>()
 const hovered = ref(false)
 const clicked = ref(false)
 const focused = computed(()=>hovered.value||clicked.value)
 </script>
 
 <template>
-  <div class="hand-card" v-element-hover="v=>hovered=v">
+  <div class="card-container" v-element-hover="v=>hovered=v">
     <div>
       <Transition name="fade">
-        <ActionSelector
-          class="action-selector"
+        <ActionList
           v-if="focused"
-          :camp
-          :card
-          :index
-          @action="$emit('action', $event)"
+          :actions="actions.map(value=>({value, icon: ICON_ACTION[value.type]}))"
+          @selected="$emit('action', $event)"
         />
       </Transition>
     </div>
     <CardView
-      v-bind="card"
-      @click="clicked=true"
       v-on-click-outside="()=>clicked=false"
+      :card
+      :focused
       class="card"
-      :focused="focused"
+      @click="clicked=true"
     />
   </div>
 </template>
 
 <style scoped>
-.hand-card {
+.card-container {
   display: grid;
   grid-template-rows: 2rem 1fr;
 }

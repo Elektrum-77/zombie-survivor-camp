@@ -1,110 +1,93 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue';
 import Login from "@/Login.vue";
-import Chat, { type Message } from "@/Chat.vue";
-import { now, useEventListener } from "@vueuse/core";
+import Chat from "@/Chat.vue";
+import { useLocalStorage, useWebSocket } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
-import type { Event, GameState } from "@/game.ts";
+import { type Event, useChat, useGame, useLobby } from "@/game.ts";
 import type { HandCardAction } from "@/Action.ts";
 
+const username = useLocalStorage("username", "")
 
-const socket = shallowRef<WebSocket>()
-const username = ref(localStorage.getItem("username") ?? "")
-watch(username, v => localStorage.setItem("username", v))
+const {players: lobbyPlayers, onMessage: onLobbyMessage} = useLobby()
+const {state, players: gamePlayers, onMessage: onGameMessage} = useGame()
+const {messages, addSystemMessage, addMessage} = useChat()
 
-const players = ref<Record<string, boolean>>({})
-
-const messages = shallowRef<Message[]>([])
-const gameState = shallowRef<GameState>()
-const connected = ref(false)
-const isLoading = ref(true)
-
-function addMessage(msg: Message) {
-  messages.value = [...messages.value, msg]
-}
-
-function addSystemMessage(text: string) {
-  messages.value = [...messages.value, {username: "System", text, timestamp: now().valueOf()}]
-}
-
-function onConnect(s: WebSocket) {
-  socket.value?.close()
-  socket.value = s
-  messages.value = []
-  s.onopen = () => {
-    connected.value = true
-  }
-  s.onclose = () => {
-    console.log("connection closed")
-    connected.value = false
-    gameState.value = undefined
-  }
-  s.onmessage = ({data}: MessageEvent<string>) => {
-    if (data === "GAME_ALREADY_STARTED") {
-      addSystemMessage("User name already taken, please choose another one")
-      s.close()
-      return
-    }
-    if (data === "NAME_ALREADY_USED") {
-      addSystemMessage("User name already taken, please choose another one")
-      s.close()
-      return
-    }
-    const parsed = JSON.parse(data) as Event
-    console.log(parsed)
-    switch (parsed.type) {
-      case "ChatMessage":
-        addMessage(parsed.value)
-        break
-      case "LobbyEvent":
-        const {username, state} = parsed.value
-        switch (state) {
-          case "CONNECT": // same as unready
-          case "UNREADY":
-          case "READY":
-            players.value[username] = state === "READY"
-            break
-          case "DISCONNECT":
-            delete players.value[username]
-            break
+const {status, send, open} = useWebSocket(() =>
+  (`ws://localhost:49152/game/${username.value}`), {
+  immediate: false,
+  autoConnect: false,
+  autoReconnect: false,
+  onConnected: (socket) => console.log("connection opened"),
+  onDisconnected: (socket) => console.log("connection closed"),
+  onError: (socket, err) => console.warn("connection error", err),
+  onMessage: (socket, {data}: MessageEvent<string>) => {
+    switch (data) {
+      case "GAME_ALREADY_STARTED":
+        console.log("received :", data)
+        addSystemMessage("User name already taken, please choose another one")
+        socket.close()
+        return
+      case "NAME_ALREADY_USED":
+        console.log("received :", data)
+        addSystemMessage("User name already taken, please choose another one")
+        socket.close()
+        return
+      default:
+        const parsed = JSON.parse(data) as Event
+        console.log("parsed :", parsed)
+        switch (parsed.type) {
+          case "ChatMessage":
+            addMessage(parsed.value)
+            return
+          case "ConnectedPlayers":
+          case "LobbyEvent":
+            onLobbyMessage(parsed)
+            return
+          case "GameState":
+          case "TurnStart":
+          case "TurnEnd":
+            onGameMessage(parsed)
+            return
         }
-        addMessage({timestamp: now().valueOf(), username, text: state})
-        break
-      case "GameState":
-        gameState.value = parsed.value
-        isLoading.value = false
-        break
-      case "ConnectedPlayers":
-        players.value = parsed.value
-        break
     }
-  }
-}
+  },
+})
+
 
 function sendChatMessage(text: string) {
-  socket.value?.send(JSON.stringify({type: "ChatMessage", value: text}))
+  send(JSON.stringify({type: "ChatMessage", value: text}))
 }
 
 function setReady(ready: boolean) {
-  socket.value?.send(JSON.stringify({type: "LobbyCommand", value: ready ? "READY" : "UNREADY"}))
+  send(JSON.stringify({type: "LobbyCommand", value: ready ? "READY" : "UNREADY"}))
 }
 
 function sendAction(action: HandCardAction) {
-  socket.value?.send(JSON.stringify({type: "Action", value: action}))
-  isLoading.value = socket.value !== undefined
+  send(JSON.stringify({type: "Action", value: action}))
 }
-
-useEventListener("unload", () => socket.value?.close())
 
 </script>
 
 <template>
   <div>
     <div class="layout">
-      <Login v-if="!connected" v-model:username="username" @connected="onConnect"/>
-      <Lobby v-else-if="gameState===undefined" :players="players" @ready="setReady($event)"/>
-      <Game v-else v-bind="gameState" @action="sendAction($event)" :is-loading/>
+      <span v-if="status==='CONNECTING'">Connecting...</span>
+      <Login
+        v-else-if="status==='CLOSED'"
+        v-model:username="username"
+        @connect="open"
+      />
+      <Lobby
+        v-else-if="state===undefined"
+        :players="lobbyPlayers"
+        @ready="setReady($event)"
+      />
+      <Game
+        v-else
+        :state="state"
+        @action="sendAction($event)"
+      />
       <Chat class="chat" :messages="messages" @send="sendChatMessage" />
     </div>
   </div>

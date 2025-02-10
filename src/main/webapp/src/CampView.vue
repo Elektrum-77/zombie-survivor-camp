@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { Camp } from "@/game.ts";
-import Card from "@/card/CardView.vue";
 import ResourceBankView from "@/ResourceBankView.vue";
+import CampCard from "@/CampCard.vue";
+import type { Action } from "@/Action.ts";
+import CardViewAction from "@/card/CardViewAction.vue";
 
 defineProps<Camp>()
+defineEmits<{ action: Action[] }>()
 </script>
 
 <template>
@@ -18,19 +21,35 @@ defineProps<Camp>()
     <div class="buildings">
       <h3>Bâtiments</h3>
       <div class="row">
-        <Card v-for="card in buildings" v-bind="card"/>
+        <CardViewAction
+          v-for="(card, index) in buildings"
+          :card
+          :index
+          :actions="[{type: 'DestroyBuilding', value: {index}}]"
+          @action="$emit('action', $event)"
+        />
+<!--        <CampCard-->
+<!--          v-for="(card, i) in buildings"-->
+<!--          :card-->
+<!--          class="card"-->
+<!--          @removed="$emit('action',{type: 'DestroyBuilding', value: {index: i}})"-->
+<!--        />-->
       </div>
     </div>
     <div class="searches">
       <h3>Recherches</h3>
       <p v-if="searches.length === 0">Aucune</p>
       <div class="row">
-        <Card v-for="card in searches" v-bind="card"/>
+        <CampCard
+          v-for="(card, i) in searches"
+          :card
+          class="card"
+          @removed="$emit('action',{type: 'CancelSearch', value: {index: i}})"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-
 </style>

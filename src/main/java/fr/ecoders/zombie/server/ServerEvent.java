@@ -25,5 +25,8 @@ public sealed interface ServerEvent {
 
   record ConnectedPlayers(List<Lobby.Player> players) implements ServerEvent {}
 
+  record TurnStart(LocalGameState state) implements ServerEvent {}
+  record TurnEnd(LocalGameState state) implements ServerEvent {}
+
   record GameStateWrapper(LocalGameState state) implements ServerEvent {}
 }

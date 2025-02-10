@@ -1,17 +1,17 @@
 <script setup lang="ts">
-defineProps<{camps: string[]}>()
-defineModel<string>("camp", {required: true})
+defineProps<{usernames: string[]}>()
+defineModel<string>("selected", {required: true})
 </script>
 
 <template>
   <div class="row">
     <div
-      v-for="c in camps"
+      v-for="username in usernames"
       class="camp"
-      :aria-selected="c === camp"
-      @click="$emit('update:camp', c)"
+      :aria-selected="username === selected"
+      @click="$emit('update:selected', username)"
     >
-      <span>{{ c }}</span>
+      <span>{{ username }}</span>
     </div>
   </div>
 </template>

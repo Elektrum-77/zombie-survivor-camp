@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type {LobbyPlayer} from "@/game.ts";
-import {shallowRef, watchEffect} from "vue";
+import { shallowRef, watch } from "vue";
 
-defineProps<{
+const {players} = defineProps<{
   players: Record<string, boolean>
 }>()
 
@@ -16,7 +15,7 @@ function readyLabel(v: boolean) {
   return v ? "READY" : "NOT READY"
 }
 
-watchEffect(() => { emit("ready", ready.value) })
+watch(() => ready.value, isReady => emit("ready", isReady))
 </script>
 
 <template>

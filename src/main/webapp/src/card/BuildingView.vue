@@ -2,7 +2,7 @@
 import type { Building } from "@/card/Card.ts";
 import ResourceBankView from "@/ResourceBankView.vue";
 import { Icon } from "@iconify/vue";
-import { ICON_ACTION_BUILD, ICON_ACTION_SEARCH } from "@/icon.ts";
+import { ICON_ACTION_CONSTRUCT, ICON_ACTION_SEARCH } from "@/icon.ts";
 
 defineProps<Building>()
 </script>
@@ -10,11 +10,11 @@ defineProps<Building>()
 <template>
   <div class="building-layout col">
     <div class="cost row">
-      <Icon :icon="ICON_ACTION_BUILD" color="red" width="2rem" height="2rem"/>
+      <Icon :icon="ICON_ACTION_CONSTRUCT" color="red" width="2rem" height="2rem"/>
       <ResourceBankView :bank="cost" opposite/>
     </div>
     <div class="production row">
-      <Icon :icon="ICON_ACTION_BUILD" width="2rem" height="2rem"/>
+      <Icon :icon="ICON_ACTION_CONSTRUCT" width="2rem" height="2rem"/>
       <ResourceBankView :bank="production"/>
     </div>
     <div class="search row">

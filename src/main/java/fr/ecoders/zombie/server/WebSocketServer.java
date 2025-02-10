@@ -1,7 +1,7 @@
 package fr.ecoders.zombie.server;
 
-import fr.ecoders.zombie.server.WebSocketServerState.InGame;
-import fr.ecoders.zombie.server.WebSocketServerState.InLobby;
+import fr.ecoders.zombie.server.PlayerCommand.Action;
+import fr.ecoders.zombie.server.PlayerCommand.LobbyCommand;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.OnOpen;
@@ -21,11 +21,12 @@ import java.util.logging.Logger;
 
 @Singleton
 @WebSocket(path = "game/{username}")
+@RunOnVirtualThread
 public class WebSocketServer {
   private static final Logger LOGGER = Logger.getLogger(WebSocketServer.class.getName());
   public static final int MIN_PLAYER_COUNT = 1;
   static final TypedKey<Thread> ACTION_THREAD_KEY = new TypedKey<>("action_thread");
-  static final TypedKey<SynchronousQueue<PlayerCommand.Action>> ACTION_QUEUE_KEY = new TypedKey<>("action_queue");
+  static final TypedKey<SynchronousQueue<Action>> ACTION_QUEUE_KEY = new TypedKey<>("action_queue");
   static final TypedKey<String> USERNAME_KEY = TypedKey.forString("username");
   private final Object lock = new Object();
   volatile private WebSocketServerState state;
@@ -40,6 +41,7 @@ public class WebSocketServer {
 
   void onStart(@Observes StartupEvent e) {
     Thread.ofVirtual()
+      .name("server thread")
       .start(() -> {
         try {
           while (!Thread.interrupted()) {
@@ -62,7 +64,11 @@ public class WebSocketServer {
     return connection.pathParam("username");
   }
 
-  @RunOnVirtualThread
+  private void broadcastChatMessage(String username, String text) {
+    connection.broadcast()
+      .sendTextAndAwait(new ServerEvent.ChatMessage(username, text, Instant.now()));
+  }
+
   @Blocking
   @OnOpen
   public void onOpen() {
@@ -74,23 +80,20 @@ public class WebSocketServer {
           connection.sendTextAndAwait("GAME_ALREADY_STARTED");
           connection.closeAndAwait();
         }
-        case InLobby inLobby -> inLobby.onOpen(connections, connection, username);
+        case InLobby inLobby -> inLobby.onOpen(connection, username);
         case null -> connection.sendTextAndAwait("SERVER_IS_STARTING");
       }
     }
   }
 
-  @RunOnVirtualThread
   @Blocking
   @OnTextMessage
   public void onMessage(PlayerCommand command) {
     var username = username();
     switch (command) {
-      case PlayerCommand.ChatMessage(String text) -> connection.broadcast()
-        .sendTextAndAwait(new ServerEvent.ChatMessage(username, text, Instant.now()));
-      case PlayerCommand.Action action when state instanceof InGame inGame ->
-        inGame.onAction(connection, action);
-      case PlayerCommand.LobbyCommand cmd when state instanceof InLobby inLobby -> inLobby.onMessage(connection, cmd);
+      case PlayerCommand.ChatMessage(String text) -> broadcastChatMessage(username, text);
+      case Action action when state instanceof InGame inGame -> inGame.onAction(connection, action);
+      case LobbyCommand cmd when state instanceof InLobby inLobby -> inLobby.onMessage(connection, cmd);
       default -> {
         connection.closeAndAwait();
         throw new IllegalStateException("Player " + username + " sent " + command + " at the wrong time");
@@ -98,7 +101,6 @@ public class WebSocketServer {
     }
   }
 
-  @RunOnVirtualThread
   @Blocking
   @OnClose
   public void onClose() {

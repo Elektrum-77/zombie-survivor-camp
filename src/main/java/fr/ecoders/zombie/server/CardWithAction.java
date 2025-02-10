@@ -11,10 +11,10 @@ import java.util.stream.Stream;
 
 public record CardWithAction(
   Card card,
-  List<Action> action) {
+  List<Action> actions) {
   public CardWithAction {
     Objects.requireNonNull(card);
-    action = List.copyOf(action);
+    actions = List.copyOf(actions);
   }
 
   private static boolean isConstructible(Card card, Camp camp) {
@@ -26,9 +26,9 @@ public record CardWithAction(
 
   private static boolean isSearchable(Card card, Camp camp) {
     var production = camp.production();
-    return camp.isSpaceAvailable()
-      && card instanceof Card.Buildable buildable
-      && production.containsAll(buildable.cost());
+    var searchCost = camp.searchCost();
+    return production.containsAll(searchCost)
+      && card instanceof Card.Searchable searchable;
   }
 
   private static CardWithAction of(Card card, int index, Camp camp) {

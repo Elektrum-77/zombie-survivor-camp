@@ -3,7 +3,7 @@ import type { Card } from "@/card/Card.ts";
 import DummyView from "@/card/DummyView.vue";
 import BuildingView from "@/card/BuildingView.vue";
 
-defineProps<Card>()
+defineProps<{ card: Card }>()
 
 const contentViews = {
   "Building": BuildingView,
@@ -13,9 +13,9 @@ const contentViews = {
 
 <template>
   <div class="card-layout">
-    <span class="title" v-text="value.name"/>
+    <span class="title" v-text="card.value.name"/>
     <span/>
-    <component :is="contentViews[type]" v-bind="value"/>
+    <component :is="contentViews[card.type]" v-bind="card.value"/>
   </div>
 </template>
 

@@ -14,14 +14,14 @@ function connect(username: string): WebSocket {
 }
 
 defineEmits<{
-  connected: [socket: WebSocket]
+  connect: []
 }>()
 </script>
 
 <template>
   <div>
     <p>Username : <input type="text" v-model="username"/></p>
-    <button @click="$emit('connected', connect(username))">Connect!</button>
+    <button @click="$emit('connect')">Connect!</button>
   </div>
 </template>
 

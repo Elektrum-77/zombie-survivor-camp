@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import type { Card } from "@/card/Card.ts";
-import type { Camp } from "@/game.ts";
-import HandCard from "@/HandCard.vue";
+import type { Camp, Hand } from "@/game.ts";
 import type { HandCardAction } from "@/Action.ts";
+import CardViewAction from "@/card/CardViewAction.vue";
 
-defineProps<{ camp: Camp, hand: readonly Card[] }>()
+const {hand} = defineProps<{ camp: Camp, hand: Hand }>()
 defineEmits<{ action: [HandCardAction] }>()
 </script>
 
 <template>
   <div class="hand-layout row">
-    <HandCard
-      v-for="(card, index) in hand"
-      :camp
+    <CardViewAction
+      v-for="({card, actions}, index) in hand"
       :card
+      :actions
       :index
       @action="$emit('action', $event)"/>
   </div>

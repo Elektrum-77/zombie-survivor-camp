@@ -6,7 +6,6 @@ import static fr.ecoders.zombie.ResourceBank.Resource.PEOPLE;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import static java.util.function.Function.identity;
 import java.util.stream.Stream;
 
@@ -42,8 +41,12 @@ public record Camp(
     return buildings.size() < maxBuildCount;
   }
 
+  public ResourceBank searchCost() {
+    return SEARCH_COST;
+  }
+
   public ResourceBank production() {
-    var searchCost = Stream.of(SEARCH_COST.multiply(-searches().size()));
+    var searchCost = Stream.of(searchCost().multiply(-searches().size()));
     var production = buildings.stream()
       .map(Buildable::production);
     var searchProduction = searches.stream()
@@ -66,7 +69,7 @@ public record Camp(
   }
 
   Camp search(Searchable searchable) {
-    if (!production().containsAll(SEARCH_COST)) {
+    if (!production().containsAll(searchCost())) {
       throw new IllegalArgumentException("Not enough materials to search " + searchable);
     }
     var searches = new ArrayList<>(this.searches);

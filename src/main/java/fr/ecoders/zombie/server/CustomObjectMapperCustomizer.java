@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.Card;
+import fr.ecoders.zombie.LocalGameState;
 import fr.ecoders.zombie.ResourceBank;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
@@ -114,6 +115,22 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeEndObject();
       }
     };
+  private static final JsonSerializer<LocalGameState> LOCAL_GAME_STATE_JSON_SERIALIZER =
+    new StdSerializer<>(LocalGameState.class) {
+      @Override
+      public void serialize(LocalGameState state, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        generator.writeStartObject();
+        generator.writeFieldName("camps");
+        provider.defaultSerializeValue(state.camps(), generator);
+        generator.writeFieldName("currentPlayer");
+        provider.defaultSerializeValue(state.currentPlayer(), generator);
+        generator.writeFieldName("hand");
+        provider.defaultSerializeValue(CardWithAction.handWithAction(state), generator);
+        generator.writeEndObject();
+      }
+    };
   private static final JsonSerializer<ServerEvent.GameStateWrapper> GAME_STATE_WRAPPER_JSON_SERIALIZER =
     new StdSerializer<>(ServerEvent.GameStateWrapper.class) {
       @Override
@@ -124,14 +141,35 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeStartObject();
         generator.writeStringField("type", "GameState");
         generator.writeFieldName("value");
-        generator.writeStartObject();
-        generator.writeFieldName("camps");
-        provider.defaultSerializeValue(state.camps(), generator);
-        generator.writeFieldName("currentPlayer");
-        provider.defaultSerializeValue(state.currentPlayer(), generator);
-        generator.writeFieldName("hand");
-        provider.defaultSerializeValue(CardWithAction.handWithAction(state), generator);
+        provider.defaultSerializeValue(state, generator);
         generator.writeEndObject();
+      }
+    };
+  private static final JsonSerializer<ServerEvent.TurnStart> TURN_START_JSON_SERIALIZER =
+    new StdSerializer<>(ServerEvent.TurnStart.class) {
+      @Override
+      public void serialize(ServerEvent.TurnStart stateWrapper, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        var state = stateWrapper.state();
+        generator.writeStartObject();
+        generator.writeStringField("type", "TurnStart");
+        generator.writeFieldName("value");
+        provider.defaultSerializeValue(state, generator);
+        generator.writeEndObject();
+      }
+    };
+  private static final JsonSerializer<ServerEvent.TurnEnd> TURN_END_JSON_SERIALIZER =
+    new StdSerializer<>(ServerEvent.TurnEnd.class) {
+      @Override
+      public void serialize(ServerEvent.TurnEnd stateWrapper, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        var state = stateWrapper.state();
+        generator.writeStartObject();
+        generator.writeStringField("type", "TurnStart");
+        generator.writeFieldName("value");
+        provider.defaultSerializeValue(state, generator);
         generator.writeEndObject();
       }
     };
@@ -153,6 +191,26 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeFieldName("searches");
         provider.defaultSerializeValue(camp.searches(), generator);
         generator.writeEndObject();
+      }
+    };
+  private static final JsonSerializer<PlayerCommand.Action> ACTION_JSON_SERIALIZER =
+    new StdSerializer<>(PlayerCommand.Action.class) {
+      @Override
+      public void serialize(PlayerCommand.Action action, JsonGenerator generator,
+        SerializerProvider provider) throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("type", action.getClass().getSimpleName());
+        generator.writeFieldName("value");
+        generator.writeStartObject();
+        switch (action) {
+          case PlayerCommand.Action.CancelSearch(int index) -> generator.writeNumberField("index", index);
+          case PlayerCommand.Action.Construct(int index) -> generator.writeNumberField("index", index);
+          case PlayerCommand.Action.DestroyBuilding(int index) -> generator.writeNumberField("index", index);
+          case PlayerCommand.Action.Search(int index) -> generator.writeNumberField("index", index);
+        }
+        generator.writeEndObject();
+        generator.writeEndObject();
+
       }
     };
 
@@ -219,7 +277,11 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ConnectedPlayers.class, CONNECTED_PLAYERS_JSON_SERIALIZER);
+    module.addSerializer(LocalGameState.class, LOCAL_GAME_STATE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.GameStateWrapper.class, GAME_STATE_WRAPPER_JSON_SERIALIZER);
+    module.addSerializer(ServerEvent.TurnStart.class, TURN_START_JSON_SERIALIZER);
+    module.addSerializer(ServerEvent.TurnEnd.class, TURN_END_JSON_SERIALIZER);
+    module.addSerializer(PlayerCommand.Action.class, ACTION_JSON_SERIALIZER);
 
     module.addDeserializer(Instant.class, INSTANT_JSON_DESERIALIZER);
     module.addDeserializer(PlayerCommand.class, PLAYER_COMMAND_JSON_DESERIALIZER);
