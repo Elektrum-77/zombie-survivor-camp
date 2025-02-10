@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Camp } from "@/game.ts";
 import ResourceBankView from "@/ResourceBankView.vue";
-import CampCard from "@/CampCard.vue";
 import type { Action } from "@/Action.ts";
 import CardViewAction from "@/card/CardViewAction.vue";
 
@@ -27,23 +26,17 @@ defineEmits<{ action: Action[] }>()
           :actions="[{type: 'DestroyBuilding', value: {index}}]"
           @action="$emit('action', $event)"
         />
-<!--        <CampCard-->
-<!--          v-for="(card, i) in buildings"-->
-<!--          :card-->
-<!--          class="card"-->
-<!--          @removed="$emit('action',{type: 'DestroyBuilding', value: {index: i}})"-->
-<!--        />-->
       </div>
     </div>
     <div class="searches">
       <h3>Recherches</h3>
       <p v-if="searches.length === 0">Aucune</p>
       <div class="row">
-        <CampCard
-          v-for="(card, i) in searches"
+        <CardViewAction
+          v-for="(card, index) in searches"
           :card
-          class="card"
-          @removed="$emit('action',{type: 'CancelSearch', value: {index: i}})"
+          :actions="[{type: 'CancelSearch', value: {index}}]"
+          @action="$emit('action', $event)"
         />
       </div>
     </div>
