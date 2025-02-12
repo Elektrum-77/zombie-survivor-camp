@@ -1,7 +1,11 @@
 package fr.ecoders.zombie.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.ecoders.zombie.Card;
 import fr.ecoders.zombie.server.PlayerCommand.Action;
 import fr.ecoders.zombie.server.PlayerCommand.LobbyCommand;
+import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.OnOpen;
@@ -15,8 +19,15 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.SynchronousQueue;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Singleton
@@ -32,11 +43,32 @@ public class WebSocketServer {
   volatile private WebSocketServerState state;
 
   @Inject
+  ObjectMapper mapper;
+  @Inject
   WebSocketConnection connection;
   @Inject
   OpenConnections connections;
 
   public WebSocketServer() {
+  }
+
+  private List<Card> readAssetCards() throws IOException {
+    var path = "/assets/cards.json";
+    try {
+      return Optional.ofNullable(getClass().getResourceAsStream(path))
+        .<List<Card>>map(
+          inputStream -> {
+            try (var reader = new BufferedReader(new InputStreamReader(inputStream))) {
+              return List.copyOf(mapper.createParser(reader)
+                .readValueAs(new TypeReference<List<Card>>() {}));
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          })
+        .orElseThrow(() -> new AssertionError("Cards file '" + path + "' not found"));
+    } catch (UncheckedIOException e) {
+      throw e.getCause();
+    }
   }
 
   void onStart(@Observes StartupEvent e) {
@@ -53,10 +85,13 @@ public class WebSocketServer {
             state = new InGame();
             LOGGER.info("In game");
             try {
-              InGame.start(connections);
-            } catch (AssertionError ae) { /* reset server state */ }
+              InGame.start(connections, readAssetCards());
+            } catch (RuntimeException ae) { /* reset server state */ }
           }
-        } catch (InterruptedException ex) { /* exit thread */ }
+        } catch (InterruptedException ex) { /* exit thread */ } catch (IOException ex) {
+          LOGGER.log(Level.SEVERE, "Closing server due to IOException", ex);
+          Quarkus.asyncExit();
+        }
       });
   }
 

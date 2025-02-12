@@ -9,6 +9,7 @@ import static fr.ecoders.zombie.server.WebSocketServer.MIN_PLAYER_COUNT;
 import static fr.ecoders.zombie.server.WebSocketServer.USERNAME_KEY;
 import io.quarkus.websockets.next.OpenConnections;
 import io.quarkus.websockets.next.WebSocketConnection;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.SynchronousQueue;
@@ -20,18 +21,18 @@ public final class InGame implements WebSocketServerState {
     var queue = new SynchronousQueue<PlayerCommand.Action>();
     var userdata = connection.userData();
     var username = userdata.get(USERNAME_KEY);
-    var camp = new Camp(6, List.of(Card.CAMPING_TENT, Card.RAIN_COLLECTORS, Card.VEGETABLE_GARDEN), List.of());
+    var camp = new Camp(6, List.of(), List.of());
     userdata.put(ACTION_QUEUE_KEY, queue);
     var handler = new WebSocketPlayerHandler(connection);
     return new Game.PlayerInfo(username, camp, handler);
   }
 
-  public static void start(OpenConnections connections) throws InterruptedException {
+  public static void start(OpenConnections connections, List<Card> cards) throws InterruptedException, IOException {
     Objects.requireNonNull(connections);
     var players = connections.stream()
       .map(InGame::player)
       .toList();
-    Game.start(players, MIN_PLAYER_COUNT);
+    Game.start(players, MIN_PLAYER_COUNT, cards);
   }
 
   public void onAction(WebSocketConnection connection, PlayerCommand.Action action) {

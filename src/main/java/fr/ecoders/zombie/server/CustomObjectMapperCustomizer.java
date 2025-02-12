@@ -1,8 +1,8 @@
 package fr.ecoders.zombie.server;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,11 +16,13 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.Card;
 import fr.ecoders.zombie.LocalGameState;
+import fr.ecoders.zombie.Resource;
 import fr.ecoders.zombie.ResourceBank;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.HashMap;
 
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
@@ -218,7 +220,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     new StdDeserializer<>(Instant.class) {
       @Override
       public Instant deserialize(JsonParser parser, DeserializationContext deserializationContext)
-      throws IOException, JacksonException {
+      throws IOException {
         return Instant.ofEpochMilli(parser.readValueAs(Long.class));
       }
     };
@@ -260,6 +262,29 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         return context.readTreeAsValue(valueNode, clazz);
       }
     };
+  private static final JsonDeserializer<Card> CARD_JSON_DESERIALIZER =
+    new StdDeserializer<>(Card.class) {
+      @Override
+      public Card deserialize(JsonParser jsonParser, DeserializationContext context)
+      throws IOException {
+        var codec = jsonParser.getCodec();
+        var root = (JsonNode) codec.readTree(jsonParser);
+        var typeNode = root.get("type");
+        var type = typeNode.asText();
+        return switch (type) {
+          case "Building" -> context.readTreeAsValue(root, Card.Building.class);
+          default -> throw new IllegalArgumentException("Unknown type: " + type);
+        };
+      }
+    };
+  private static final JsonDeserializer<ResourceBank> RESOURCE_BANK_JSON_DESERIALIZER =
+    new StdDeserializer<>(ResourceBank.class) {
+      @Override
+      public ResourceBank deserialize(JsonParser jsonParser, DeserializationContext context)
+      throws IOException {
+        return new ResourceBank(jsonParser.readValueAs(new TypeReference<HashMap<Resource, Integer>>() {}));
+      }
+    };
 
   @Override
   public int priority() {
@@ -286,6 +311,8 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addDeserializer(Instant.class, INSTANT_JSON_DESERIALIZER);
     module.addDeserializer(PlayerCommand.class, PLAYER_COMMAND_JSON_DESERIALIZER);
     module.addDeserializer(PlayerCommand.Action.class, ACTION_JSON_DESERIALIZER);
+    module.addDeserializer(Card.class, CARD_JSON_DESERIALIZER);
+    module.addDeserializer(ResourceBank.class, RESOURCE_BANK_JSON_DESERIALIZER);
 
     mapper.registerModule(module);
   }

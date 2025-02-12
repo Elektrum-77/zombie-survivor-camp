@@ -2,7 +2,7 @@ package fr.ecoders.zombie;
 
 import fr.ecoders.zombie.Card.Buildable;
 import fr.ecoders.zombie.Card.Searchable;
-import static fr.ecoders.zombie.ResourceBank.Resource.PEOPLE;
+import static fr.ecoders.zombie.Resource.PEOPLE;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

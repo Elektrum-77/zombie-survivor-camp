@@ -1,6 +1,7 @@
 package fr.ecoders.zombie;
 
-import static fr.ecoders.zombie.Card.CARDS;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toMap;
 
@@ -25,7 +25,8 @@ public final class Game {
     this.stack = stack;
   }
 
-  public static void start(List<PlayerInfo> infos, int minPlayerCount) throws InterruptedException {
+  public static void start(List<PlayerInfo> infos, int minPlayerCount, List<Card> cards) throws InterruptedException {
+    cards = new ArrayList<>(List.copyOf(cards));
     infos = List.copyOf(infos);
     if (minPlayerCount < 1) {
       throw new IllegalArgumentException("minPlayerCount must be greater than 0");
@@ -38,11 +39,14 @@ public final class Game {
       throw new IllegalArgumentException("Some players have the same name");
     }
 
+
+    Collections.shuffle(cards);
+    var stack = new Stack(cards);
     var camps = infos.stream()
-      .collect(toMap(PlayerInfo::name, PlayerInfo::camp, (_1, _2) -> null, LinkedHashMap::new));
+      .collect(toMap(PlayerInfo::name, PlayerInfo::camp, (_, _) -> null, LinkedHashMap::new));
     var handlers = infos.stream()
-      .collect(toMap(PlayerInfo::name, PlayerInfo::handler, (_1, _2) -> null, LinkedHashMap::new));
-    var game = new Game(camps, handlers, new Stack(CARDS));
+      .collect(toMap(PlayerInfo::name, PlayerInfo::handler, (_, _) -> null, LinkedHashMap::new));
+    var game = new Game(camps, handlers, stack);
     LOGGER.info("Turn evaluation order defined as " + handlers.keySet());
 
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -123,7 +127,7 @@ public final class Game {
   }
 
   public void discardAll(List<Card> cards) {
-    List.copyOf(cards);
+    cards = List.copyOf(cards);
     stack.discardAll(cards);
   }
 
