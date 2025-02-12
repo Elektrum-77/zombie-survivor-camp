@@ -17,11 +17,10 @@ import java.util.concurrent.SynchronousQueue;
 public final class InGame implements WebSocketServerState {
   private static final String ALREADY_PLAYED = "ALREADY_PLAYED";
 
-  private static Game.PlayerInfo player(WebSocketConnection connection) {
+  private static Game.PlayerInfo player(WebSocketConnection connection, Camp camp) {
     var queue = new SynchronousQueue<PlayerCommand.Action>();
     var userdata = connection.userData();
     var username = userdata.get(USERNAME_KEY);
-    var camp = new Camp(6, List.of(), List.of());
     userdata.put(ACTION_QUEUE_KEY, queue);
     var handler = new WebSocketPlayerHandler(connection);
     return new Game.PlayerInfo(username, camp, handler);
@@ -29,8 +28,25 @@ public final class InGame implements WebSocketServerState {
 
   public static void start(OpenConnections connections, List<Card> cards) throws InterruptedException, IOException {
     Objects.requireNonNull(connections);
+    var buildings = cards.stream()
+      .map(c -> c instanceof Card.Building b ? b : null)
+      .filter(Objects::nonNull)
+      .toList();
+    var vegetableGarden = buildings.stream()
+      .filter(c -> "Vegetable gardens".equals(c.name()))
+      .findAny()
+      .orElseThrow();
+    var campingTent = buildings.stream()
+      .filter(c -> "Camping tents".equals(c.name()))
+      .findAny()
+      .orElseThrow();
+    var rainCollectors = buildings.stream()
+      .filter(c -> "Rain collectors".equals(c.name()))
+      .findAny()
+      .orElseThrow();
+    var startingCamp = new Camp(6, List.of(vegetableGarden, campingTent, rainCollectors), List.of());
     var players = connections.stream()
-      .map(InGame::player)
+      .map(c -> player(c, startingCamp))
       .toList();
     Game.start(players, MIN_PLAYER_COUNT, cards);
   }
