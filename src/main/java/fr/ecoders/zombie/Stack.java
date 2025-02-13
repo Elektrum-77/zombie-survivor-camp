@@ -1,5 +1,6 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.card.Card;
 import java.util.ArrayList;
 import java.util.List;
 

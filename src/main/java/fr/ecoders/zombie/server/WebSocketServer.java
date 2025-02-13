@@ -2,7 +2,7 @@ package fr.ecoders.zombie.server;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.ecoders.zombie.Card;
+import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.server.PlayerCommand.Action;
 import fr.ecoders.zombie.server.PlayerCommand.LobbyCommand;
 import io.quarkus.runtime.Quarkus;

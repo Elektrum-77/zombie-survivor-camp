@@ -14,7 +14,8 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Camp;
-import fr.ecoders.zombie.Card;
+import fr.ecoders.zombie.card.Building;
+import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.LocalGameState;
 import fr.ecoders.zombie.Resource;
 import fr.ecoders.zombie.ResourceBank;
@@ -45,16 +46,16 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         serializerProvider.defaultSerializeValue(v, jsonGenerator);
       }
     };
-  private static final JsonSerializer<Card.Building> BUILDING_JSON_SERIALIZER =
-    new StdSerializer<>(Card.Building.class) {
+  private static final JsonSerializer<Building> BUILDING_JSON_SERIALIZER =
+    new StdSerializer<>(Building.class) {
       @Override
-      public void serializeWithType(Card.Building value, JsonGenerator gen, SerializerProvider serializers,
+      public void serializeWithType(Building value, JsonGenerator gen, SerializerProvider serializers,
         TypeSerializer typeSer) throws IOException {
         serialize(value, gen, serializers);
       }
 
       @Override
-      public void serialize(Card.Building building, JsonGenerator generator,
+      public void serialize(Building building, JsonGenerator generator,
         SerializerProvider provider)
       throws IOException {
         generator.writeStartObject();
@@ -272,7 +273,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         var typeNode = root.get("type");
         var type = typeNode.asText();
         return switch (type) {
-          case "Building" -> context.readTreeAsValue(root, Card.Building.class);
+          case "Building" -> context.readTreeAsValue(root, Building.class);
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
       }
@@ -297,7 +298,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
 
     module.addSerializer(Instant.class, INSTANT_JSON_SERIALIZER);
     module.addSerializer(ResourceBank.class, RESOURCE_BANK_JSON_SERIALIZER);
-    module.addSerializer(Card.Building.class, BUILDING_JSON_SERIALIZER);
+    module.addSerializer(Building.class, BUILDING_JSON_SERIALIZER);
     module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);

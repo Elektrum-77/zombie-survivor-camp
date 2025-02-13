@@ -1,7 +1,8 @@
 package fr.ecoders.zombie.server;
 
 import fr.ecoders.zombie.Camp;
-import fr.ecoders.zombie.Card;
+import fr.ecoders.zombie.card.Building;
+import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.Game;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_QUEUE_KEY;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_THREAD_KEY;
@@ -29,7 +30,7 @@ public final class InGame implements WebSocketServerState {
   public static void start(OpenConnections connections, List<Card> cards) throws InterruptedException, IOException {
     Objects.requireNonNull(connections);
     var buildings = cards.stream()
-      .map(c -> c instanceof Card.Building b ? b : null)
+      .map(c -> c instanceof Building b ? b : null)
       .filter(Objects::nonNull)
       .toList();
     var vegetableGarden = buildings.stream()
@@ -44,7 +45,7 @@ public final class InGame implements WebSocketServerState {
       .filter(c -> "Rain collectors".equals(c.name()))
       .findAny()
       .orElseThrow();
-    var startingCamp = new Camp(6, List.of(vegetableGarden, campingTent, rainCollectors), List.of());
+    var startingCamp = new Camp(6, List.of(vegetableGarden, campingTent, rainCollectors), List.of(), List.of());
     var players = connections.stream()
       .map(c -> player(c, startingCamp))
       .toList();

@@ -1,152 +1,112 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.card.Card.Buildable;
+import fr.ecoders.zombie.card.Card.Searchable;
+import fr.ecoders.zombie.card.Card.Zombie;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
-public final class PlayerTurn {
-  private final Consumer<Game> consumer;
-
-  private PlayerTurn(Consumer<Game> consumer) {
-    this.consumer = consumer;
+public interface PlayerTurn {
+  static Builder of(LocalGameState state) {
+    Objects.requireNonNull(state);
+    return new Builder(state);
   }
 
-  private static Camp cancelSearch(Camp camp, int index) {
-    var searches = new ArrayList<>(camp.searches());
-    Objects.checkIndex(index, searches.size());
-    searches.remove(index);
-    return camp.withSearches(searches);
-  }
-
-  private static Camp destroyBuilding(Camp camp, int index) {
-    var buildings = new ArrayList<>(camp.buildings());
-    Objects.checkIndex(index, buildings.size());
-    buildings.remove(index);
-    return camp.withBuildings(buildings);
-  }
-
-  private static Camp construct(Camp camp, Card.Buildable buildable) {
-    var buildings = new ArrayList<>(camp.buildings());
-    if (buildings.size() >= camp.maxBuildCount()) {
-      throw new IllegalArgumentException("too many buildings");
-    }
-    var production = camp.production();
-    if (!production.containsAll(buildable.cost())) {
-      throw new IllegalArgumentException("not enough resources to build : " + buildable);
-    }
-    buildings.add(buildable);
-    return camp.withBuildings(buildings);
-  }
-
-  private static Camp search(Camp camp, Card.Searchable searchable) {
-    var searches = new ArrayList<>(camp.searches());
-    var production = camp.production();
-    if (!production.containsAll(Camp.SEARCH_COST)) {
-      throw new IllegalArgumentException("not enough resources (%s) for camp (%s) to search : %s".formatted(
-        production, camp, searchable));
-    }
-    searches.add(searchable);
-    return camp.withSearches(searches);
-  }
-
-  public static Builder with() {
-    return new Builder();
-  }
-
-  void play(Game game) {
-    consumer.accept(game);
-  }
+  void play(Game game, String currentUser, List<Card> hand);
 
   public static final class Builder {
-    private Consumer<Game> consumer = _ -> { /* nothing */ };
+    private final ArrayList<Action> actions = new ArrayList<>();
+    private LocalGameState state;
     private boolean isDone = false;
 
-    private Builder() {
+    private Builder(LocalGameState state) {
+      this.state = state;
     }
 
-    public LocalGameState cancelSearch(LocalGameState state, int index) {
-      if (isDone) {
-        throw new IllegalStateException("player turn is already done");
-      }
-      Objects.requireNonNull(state);
-      var camp = state.camp();
-      var username = state.currentPlayer();
+    static private <E> List<E> listRemove(List<E> l, int i) {
+      l = new ArrayList<>(l);
+      l.remove(i);
+      return l;
+    }
 
-      state = state.withCamp(PlayerTurn.cancelSearch(camp, index));
-      consumer = consumer.andThen(
-        game -> game.setCamp(username, PlayerTurn.cancelSearch(game.camp(username), index)));
+    static private <E> List<E> listAdd(List<E> l, E e) {
+      l = new ArrayList<>(l);
+      l.add(e);
+      return l;
+    }
+
+    public LocalGameState state() {
       return state;
     }
 
-    public LocalGameState destroyBuilding(LocalGameState state, int index) {
-      if (isDone) {
-        throw new IllegalStateException("player turn is already done");
-      }
-      Objects.requireNonNull(state);
-      var camp = state.camp();
-      var username = state.currentPlayer();
-
-      state = state.withCamp(PlayerTurn.destroyBuilding(camp, index));
-      consumer = consumer.andThen(
-        game -> game.setCamp(username, PlayerTurn.destroyBuilding(game.camp(username), index)));
-      return state;
-    }
-
-    public LocalGameState construct(LocalGameState state, int index) {
-      if (isDone) {
-        throw new IllegalStateException("player turn is already done");
-      }
-      Objects.requireNonNull(state);
-      var camp = state.camp();
-      var username = state.currentPlayer();
-      var hand = new ArrayList<>(state.hand());
+    private Card handCard(List<Card> hand, int index) {
       Objects.checkIndex(index, hand.size());
-      var card = hand.remove(index);
-      if (!(card instanceof Card.Buildable buildable)) {
-        throw new IllegalArgumentException("card (" + card + ") is not buildable");
-      }
-
-      state = state.withCamp(PlayerTurn.construct(camp, buildable))
-        .withHand(List.of());
-      consumer = consumer.andThen(game -> {
-        game.setCamp(username, PlayerTurn.construct(game.camp(username), buildable));
-        game.discardAll(hand);
-      });
       isDone = true;
-      return state;
+      return hand.get(index);
     }
 
-    public LocalGameState search(LocalGameState state, int index) {
+    private Zombie handZombie(List<Card> hand, int index) {
+      var card = handCard(hand, index);
+      if (!(card instanceof Zombie zombie)) {
+        throw new IllegalArgumentException("Card " + card + " is not a zombie");
+      }
+      return zombie;
+    }
+
+    private Buildable handBuildable(List<Card> hand, int index) {
+      var card = handCard(hand, index);
+      if (!(card instanceof Buildable buildable)) {
+        throw new IllegalArgumentException("Card " + card + " is not buildable");
+      }
+      return buildable;
+    }
+
+    private Searchable handSearchable(List<Card> hand, int index) {
+      var card = handCard(hand, index);
+      if (!(card instanceof Searchable searchable)) {
+        throw new IllegalArgumentException("Card " + card + " is not searchable");
+      }
+      return searchable;
+    }
+
+    public LocalGameState add(Action action) {
+      Objects.requireNonNull(action);
       if (isDone) {
-        throw new IllegalStateException("player turn is already done");
+        throw new IllegalStateException("Turn is already done");
       }
-      Objects.requireNonNull(state);
       var camp = state.camp();
-      var username = state.currentPlayer();
-      var hand = new ArrayList<>(state.hand());
-      Objects.checkIndex(index, hand.size());
-      var card = hand.remove(index);
-      if (!(card instanceof Card.Searchable searchable)) {
-        throw new IllegalArgumentException("card (" + card + ") is not searchable");
-      }
-
-      state = state.withCamp(PlayerTurn.search(camp, searchable))
-        .withHand(List.of());
-      consumer = consumer.andThen(game -> {
-        game.setCamp(username, PlayerTurn.search(game.camp(username), searchable));
-        game.discardAll(hand);
-      });
-      isDone = true;
+      state = switch (action) {
+        case Action.AddZombie(String targetUser, int handIndex) -> {
+          var targetCamp = state.userCamp(targetUser);
+          var zombie = handZombie(state.hand(), handIndex);
+          yield state.withUserCamp(targetUser, targetCamp.withZombies(listAdd(targetCamp.zombies(), zombie)));
+        }
+        case Action.CancelSearch(int searchIndex) ->
+          state.withCamp(camp.withSearches(listRemove(camp.searches(), searchIndex)));
+        case Action.Construct(int handIndex) -> {
+          var building = handBuildable(state.hand(), handIndex);
+          yield state.withCamp(camp.withBuildings(listAdd(camp.buildings(), building)));
+        }
+        case Action.DestroyBuilding(int buildingIndex) ->
+          state.withCamp(camp.withBuildings(listRemove(camp.buildings(), buildingIndex)));
+        case Action.Search(int handIndex) -> {
+          var searchable = handSearchable(state.hand(), handIndex);
+          var production = camp.production();
+          if (production.containsAll(camp.searchCost())) {
+            var missing = production.removeAll(camp.searchCost())
+              .filterNegative()
+              .multiply(-1);
+            throw new IllegalArgumentException("Not enough resources produced to search. Missing " + missing);
+          }
+          yield state.withCamp(camp.withSearches(listAdd(camp.searches(), searchable)));
+        }
+      };
+      actions.add(action);
       return state;
     }
 
-    public PlayerTurn build() {
-      if (!isDone) {
-        throw new IllegalStateException("player turn is not done");
-      }
-      return new PlayerTurn(consumer);
-    }
 
     public boolean isDone() {
       return isDone;

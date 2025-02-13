@@ -1,5 +1,5 @@
 import type { Resource } from "@/ResourceBank.ts";
-import type {ActionType} from "@/Action.ts";
+import type { ActionType } from "@/Action.ts";
 
 export const ICON_ACTION_CONSTRUCT = "mdi:hammer-screwdriver"
 export const ICON_ACTION_SEARCH = "mdi:search"
@@ -18,5 +18,6 @@ export const ICON_RESOURCES: Record<Resource, string> = {
   FUEL: "mdi:fuel",
   MATERIALS: "mdi:screw-lag",
   MEDICINES: "mdi:medication",
-  MILITARY: "mdi:gun"
+  MILITARY: "mdi:gun",
+  AMMUNITION: "mdi:bullets"
 } as const

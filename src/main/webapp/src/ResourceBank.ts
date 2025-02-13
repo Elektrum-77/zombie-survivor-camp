@@ -1,4 +1,4 @@
-export type Resource = "PEOPLE" | "WATER" | "FOOD" | "MEDICINES" | "MILITARY" | "MATERIALS" | "FUEL"
+export type Resource = "PEOPLE" | "WATER" | "FOOD" | "MEDICINES" | "MILITARY" | "AMMUNITION" | "MATERIALS" | "FUEL"
 export type ResourceBank = { [r in Resource]?: number }
 
 export function bankContainsAll(bank: ResourceBank, other: ResourceBank) {

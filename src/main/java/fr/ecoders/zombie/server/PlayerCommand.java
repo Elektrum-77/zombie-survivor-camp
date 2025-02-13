@@ -1,5 +1,7 @@
 package fr.ecoders.zombie.server;
 
+import fr.ecoders.zombie.PlayerTurn;
+
 public sealed interface PlayerCommand {
   enum LobbyCommand implements PlayerCommand {
     READY,

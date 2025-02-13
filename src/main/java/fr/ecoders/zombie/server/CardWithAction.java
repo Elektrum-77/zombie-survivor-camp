@@ -1,7 +1,7 @@
 package fr.ecoders.zombie.server;
 
 import fr.ecoders.zombie.Camp;
-import fr.ecoders.zombie.Card;
+import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.LocalGameState;
 import fr.ecoders.zombie.server.PlayerCommand.Action;
 import java.util.List;

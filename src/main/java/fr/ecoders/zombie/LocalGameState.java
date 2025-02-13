@@ -1,5 +1,6 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.card.Card;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,27 @@ public record LocalGameState(
     camps.put(currentPlayer, camp);
     return new LocalGameState(camps, hand, currentPlayer);
   }
+
+  public LocalGameState withUserCamp(String username, Camp camp) {
+    var camps = new HashMap<>(this.camps);
+    camps.put(username, camp);
+    return new LocalGameState(camps, hand, currentPlayer);
+  }
+
   public LocalGameState withHand(List<Card> hand) {
     return new LocalGameState(camps, hand, currentPlayer);
+  }
+
+  public Camp userCamp(String username) {
+    Objects.requireNonNull(username);
+    if (!camps.containsKey(username)) {
+      throw new IllegalArgumentException("User " + username + " does not exist");
+    }
+    return camps.get(username);
+  }
+
+  public Card handCard(int index) {
+    Objects.checkIndex(index, hand.size());
+    return hand.get(index);
   }
 }
