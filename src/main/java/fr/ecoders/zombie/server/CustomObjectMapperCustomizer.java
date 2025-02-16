@@ -13,12 +13,14 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.LocalGameState;
 import fr.ecoders.zombie.Resource;
 import fr.ecoders.zombie.ResourceBank;
+import fr.ecoders.zombie.card.ZombieEvent;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
 import java.io.IOException;
@@ -69,6 +71,28 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         provider.defaultSerializeValue(building.production(), generator);
         generator.writeFieldName("search");
         provider.defaultSerializeValue(building.search(), generator);
+        generator.writeEndObject();
+        generator.writeEndObject();
+      }
+    };
+  private static final JsonSerializer<ZombieEvent> ZOMBIE_EVENT_JSON_SERIALIZER =
+    new StdSerializer<>(ZombieEvent.class) {
+      @Override
+      public void serializeWithType(ZombieEvent value, JsonGenerator gen, SerializerProvider serializers,
+        TypeSerializer typeSer) throws IOException {
+        serialize(value, gen, serializers);
+      }
+
+      @Override
+      public void serialize(ZombieEvent event, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("type", "Zombie");
+        generator.writeFieldName("value");
+        generator.writeStartObject();
+        generator.writeStringField("name", event.name());
+        generator.writeNumberField("count", event.count());
         generator.writeEndObject();
         generator.writeEndObject();
       }
@@ -196,20 +220,24 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeEndObject();
       }
     };
-  private static final JsonSerializer<PlayerCommand.Action> ACTION_JSON_SERIALIZER =
-    new StdSerializer<>(PlayerCommand.Action.class) {
+  private static final JsonSerializer<Action> ACTION_JSON_SERIALIZER =
+    new StdSerializer<>(Action.class) {
       @Override
-      public void serialize(PlayerCommand.Action action, JsonGenerator generator,
+      public void serialize(Action action, JsonGenerator generator,
         SerializerProvider provider) throws IOException {
         generator.writeStartObject();
         generator.writeStringField("type", action.getClass().getSimpleName());
         generator.writeFieldName("value");
         generator.writeStartObject();
         switch (action) {
-          case PlayerCommand.Action.CancelSearch(int index) -> generator.writeNumberField("index", index);
-          case PlayerCommand.Action.Construct(int index) -> generator.writeNumberField("index", index);
-          case PlayerCommand.Action.DestroyBuilding(int index) -> generator.writeNumberField("index", index);
-          case PlayerCommand.Action.Search(int index) -> generator.writeNumberField("index", index);
+          case Action.CancelSearch(int index) -> generator.writeNumberField("index", index);
+          case Action.Construct(int index) -> generator.writeNumberField("index", index);
+          case Action.DestroyBuilding(int index) -> generator.writeNumberField("index", index);
+          case Action.Search(int index) -> generator.writeNumberField("index", index);
+          case Action.AddZombie(String username, int index) -> {
+            generator.writeNumberField("index", index);
+            generator.writeStringField("username", username);
+          }
         }
         generator.writeEndObject();
         generator.writeEndObject();
@@ -238,25 +266,25 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         return switch (type) {
           case "ChatMessage" -> new PlayerCommand.ChatMessage(valueNode.asText());
           case "LobbyCommand" -> context.readTreeAsValue(valueNode, PlayerCommand.LobbyCommand.class);
-          case "Action" -> context.readTreeAsValue(valueNode, PlayerCommand.Action.class);
+          case "Action" -> new PlayerCommand.ActionWrapper(context.readTreeAsValue(valueNode, Action.class));
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
       }
     };
-  private static final JsonDeserializer<PlayerCommand.Action> ACTION_JSON_DESERIALIZER =
-    new StdDeserializer<>(PlayerCommand.Action.class) {
+  private static final JsonDeserializer<Action> ACTION_JSON_DESERIALIZER =
+    new StdDeserializer<>(Action.class) {
       @Override
-      public PlayerCommand.Action deserialize(JsonParser jsonParser, DeserializationContext context)
+      public Action deserialize(JsonParser jsonParser, DeserializationContext context)
       throws IOException {
         var codec = jsonParser.getCodec();
         var root = (JsonNode) codec.readTree(jsonParser);
         var typeNode = root.get("type");
         var type = typeNode.asText();
         var clazz = switch (type) {
-          case "DestroyBuilding" -> PlayerCommand.Action.DestroyBuilding.class;
-          case "CancelSearch" -> PlayerCommand.Action.CancelSearch.class;
-          case "Construct" -> PlayerCommand.Action.Construct.class;
-          case "Search" -> PlayerCommand.Action.Search.class;
+          case "DestroyBuilding" -> Action.DestroyBuilding.class;
+          case "CancelSearch" -> Action.CancelSearch.class;
+          case "Construct" -> Action.Construct.class;
+          case "Search" -> Action.Search.class;
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
         var valueNode = root.get("value");
@@ -274,6 +302,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         var type = typeNode.asText();
         return switch (type) {
           case "Building" -> context.readTreeAsValue(root, Building.class);
+          case "Zombie" -> context.readTreeAsValue(root, ZombieEvent.class);
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
       }
@@ -299,6 +328,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addSerializer(Instant.class, INSTANT_JSON_SERIALIZER);
     module.addSerializer(ResourceBank.class, RESOURCE_BANK_JSON_SERIALIZER);
     module.addSerializer(Building.class, BUILDING_JSON_SERIALIZER);
+    module.addSerializer(ZombieEvent.class, ZOMBIE_EVENT_JSON_SERIALIZER);
     module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
@@ -307,11 +337,11 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addSerializer(ServerEvent.TurnUpdate.class, TURN_UPDATE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.TurnStart.class, TURN_START_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.TurnEnd.class, TURN_END_JSON_SERIALIZER);
-    module.addSerializer(PlayerCommand.Action.class, ACTION_JSON_SERIALIZER);
+    module.addSerializer(Action.class, ACTION_JSON_SERIALIZER);
 
     module.addDeserializer(Instant.class, INSTANT_JSON_DESERIALIZER);
     module.addDeserializer(PlayerCommand.class, PLAYER_COMMAND_JSON_DESERIALIZER);
-    module.addDeserializer(PlayerCommand.Action.class, ACTION_JSON_DESERIALIZER);
+    module.addDeserializer(Action.class, ACTION_JSON_DESERIALIZER);
     module.addDeserializer(Card.class, CARD_JSON_DESERIALIZER);
     module.addDeserializer(ResourceBank.class, RESOURCE_BANK_JSON_DESERIALIZER);
 

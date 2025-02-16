@@ -2,8 +2,9 @@ package fr.ecoders.zombie.server;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.card.Card;
-import fr.ecoders.zombie.server.PlayerCommand.Action;
+import fr.ecoders.zombie.server.PlayerCommand.ActionWrapper;
 import fr.ecoders.zombie.server.PlayerCommand.LobbyCommand;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.StartupEvent;
@@ -128,9 +129,9 @@ public class WebSocketServer {
     synchronized (lock) {
       switch (command) {
         case PlayerCommand.ChatMessage(String text) -> broadcastChatMessage(username, text);
-        case Action action when state instanceof InGame inGame -> inGame.onAction(connection, action);
+        case ActionWrapper(Action action) when state instanceof InGame inGame -> inGame.onAction(connection, action);
         case LobbyCommand cmd when state instanceof InLobby inLobby -> inLobby.onMessage(connection, cmd);
-        default -> {
+        case ActionWrapper _, LobbyCommand _ -> {
           connection.closeAndAwait();
           throw new IllegalStateException(
             "Player " + username + " sent " + command + " at the wrong time (" + state + ")");

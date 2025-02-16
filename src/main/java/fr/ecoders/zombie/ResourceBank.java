@@ -10,8 +10,17 @@ import static java.util.stream.Collectors.summingInt;
 import java.util.stream.Stream;
 
 public record ResourceBank(Map<Resource, Integer> resources) {
+  public static final ResourceBank EMPTY = new ResourceBank(Map.of());
+
   public ResourceBank {
-    resources = Map.copyOf(resources);
+    resources = validateResources(resources);
+  }
+
+  private static Map<Resource, Integer> validateResources(Map<Resource, Integer> resources) {
+    resources = new HashMap<>(resources);
+    resources.values()
+      .removeIf(i -> i == 0);
+    return Map.copyOf(resources);
   }
 
   public static ResourceBank sumAll(Stream<ResourceBank> banks) {
@@ -21,6 +30,10 @@ public record ResourceBank(Map<Resource, Integer> resources) {
       .flatMap(Collection::stream)
       .collect(groupingBy(Map.Entry::getKey, summingInt(Map.Entry::getValue)));
     return new ResourceBank(resources);
+  }
+
+  public boolean isEmpty() {
+    return resources.isEmpty();
   }
 
   public ResourceBank add(Resource resource, int amount) {

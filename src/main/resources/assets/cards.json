@@ -1,7 +1,7 @@
 [
   {
     "type": "Building",
-    "count": 8,
+    "replica": 8,
     "name": "Camping tents",
     "cost": {
       "MATERIALS": 1
@@ -17,7 +17,7 @@
   },
   {
     "type": "Building",
-    "count": 8,
+    "replica": 8,
     "name": "Rain collectors",
     "cost": {
       "MATERIALS": 1
@@ -31,7 +31,7 @@
   },
   {
     "type": "Building",
-    "count": 3,
+    "replica": 3,
     "name": "Well",
     "cost": {
       "MATERIALS": 1,
@@ -47,7 +47,7 @@
   {
     "type": "Building",
     "category": "AGRICULTURAL",
-    "count": 8,
+    "replica": 8,
     "name": "Vegetable gardens",
     "cost": {
       "MATERIALS": 1
@@ -62,7 +62,7 @@
   {
     "type": "Building",
     "category": "AGRICULTURAL",
-    "count": 3,
+    "replica": 3,
     "name": "Farm",
     "cost": {
       "MATERIALS": 2
@@ -78,7 +78,7 @@
   },
   {
     "type": "Building",
-    "count": 5,
+    "replica": 5,
     "name": "Hunter tent",
     "cost": {
       "MATERIALS": 1
@@ -93,7 +93,7 @@
   },
   {
     "type": "Building",
-    "count": 8,
+    "replica": 8,
     "name": "Logging tent",
     "cost": {
       "MATERIALS": 1
@@ -108,7 +108,7 @@
   },
   {
     "type": "Building",
-    "count": 5,
+    "replica": 5,
     "name": "Medical tent",
     "cost": {
       "MATERIALS": 1
@@ -124,7 +124,7 @@
   },
   {
     "type": "Building",
-    "count": 5,
+    "replica": 5,
     "name": "Training yard",
     "cost": {
       "MATERIALS": 1
@@ -140,7 +140,7 @@
   },
   {
     "type": "Building",
-    "count": 4,
+    "replica": 4,
     "name": "Ammunition workbench",
     "cost": {
       "MATERIALS": 1
@@ -156,7 +156,7 @@
   },
   {
     "type": "Building",
-    "count": 6,
+    "replica": 6,
     "name": "Watch tower",
     "cost": {
       "MATERIALS": 2
@@ -172,7 +172,7 @@
   },
   {
     "type": "Building",
-    "count": 3,
+    "replica": 3,
     "name": "Infested super market",
     "cost": {
       "MATERIALS": 2,
@@ -192,7 +192,7 @@
   },
   {
     "type": "Building",
-    "count": 3,
+    "replica": 3,
     "name": "Infested gas station",
     "cost": {
       "MATERIALS": 2,
@@ -210,7 +210,7 @@
   },
   {
     "type": "Building",
-    "count": 3,
+    "replica": 3,
     "name": "Infested police station",
     "cost": {
       "MATERIALS": 2,
@@ -229,7 +229,7 @@
   },
   {
     "type": "Building",
-    "count": 3,
+    "replica": 3,
     "name": "Infested house",
     "cost": {
       "MATERIALS": 2,
@@ -244,5 +244,11 @@
       "MATERIALS": 1,
       "MILITARY": 2
     }
+  },
+  {
+    "type": "Zombie",
+    "name": "Wandering zombies",
+    "count": 5,
+    "replica": 6
   }
 ]

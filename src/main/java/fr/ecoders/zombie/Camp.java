@@ -62,14 +62,18 @@ public record Camp(
     return SEARCH_COST;
   }
 
+  private ResourceBank totalSearchCost() {
+    return searchCost().multiply(-searches().size());
+  }
+
   public ResourceBank production() {
-    var searchCost = Stream.of(searchCost().multiply(-searches().size()));
+    var totalSearchCost = Stream.of(totalSearchCost());
     var production = buildings.stream()
       .map(Buildable::production);
     var searchProduction = searches.stream()
       .map(Searchable::search);
 
-    var streams = Stream.of(searchCost, searchProduction, production);
+    var streams = Stream.of(totalSearchCost, searchProduction, production);
     return ResourceBank.sumAll(streams.flatMap(identity()));
   }
 }

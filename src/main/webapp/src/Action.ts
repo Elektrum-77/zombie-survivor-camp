@@ -8,6 +8,12 @@ export type Action = {
     index: number
   }
 } | {
+  type: "AddZombie"
+  value: {
+    username: string
+    index: number
+  }
+} | {
   type: "Search"
   value: {
     index: number

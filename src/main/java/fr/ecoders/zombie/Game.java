@@ -73,14 +73,15 @@ public final class Game {
         // apply all turns
         for (var o : futures) {
           var localGameState = o.localGameState();
+          var hand = new ArrayList<>(localGameState.hand());
           var username = localGameState.currentPlayer();
           var future = o.answer();
           try {
             var turn = future.get();
-            turn.play(game);
+            var state = turn.play(localGameState);
           } catch (ExecutionException ex) {
             game.activeHandlers.remove(username);
-            game.discardAll(localGameState.hand());
+            game.discardAll(hand);
             var cause = ex.getCause();
             if (!(cause instanceof InterruptedException)) {
               throw new AssertionError("An error occurred while waiting for " + username + "'s action", cause);
@@ -92,7 +93,7 @@ public final class Game {
   }
 
   private LocalGameState gameState(String player) {
-    return new LocalGameState(camps, stack.draw(3), player);
+    return new LocalGameState(camps, stack.draw(3), List.of(), player);
   }
 
   private Map<String, Player.Handler> activeHandlers() {
@@ -136,7 +137,9 @@ public final class Game {
     LocalGameState localGameState,
     Future<PlayerTurn> answer) {
     private static AskAction asking(Player.Handler handler, LocalGameState localGameState, ExecutorService executor) {
-      return new AskAction(localGameState, executor.submit(() -> handler.buildTurn(localGameState)));
+      return new AskAction(
+        localGameState,
+        executor.submit(() -> handler.buildTurn(PlayerTurn.builder(localGameState))));
     }
   }
 

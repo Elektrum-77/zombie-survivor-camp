@@ -10,26 +10,17 @@ import java.util.Objects;
 public record LocalGameState(
   Map<String, Camp> camps,
   List<Card> hand,
+  List<Card> discards,
   String currentPlayer
 ) {
   public LocalGameState {
     camps = Map.copyOf(camps);
     hand = List.copyOf(hand);
+    discards = List.copyOf(discards);
     Objects.requireNonNull(currentPlayer);
     if (!camps.containsKey(currentPlayer)) {
       throw new IllegalArgumentException("Player " + currentPlayer + " does not exist");
     }
-  }
-
-  public Card playedCard(int index) {
-    Objects.checkIndex(index, hand.size());
-    return hand.get(index);
-  }
-
-  public List<Card> discardedCards(int index) {
-    var discarded = new ArrayList<>(hand);
-    discarded.remove(index);
-    return List.copyOf(discarded);
   }
 
   public Camp camp() {

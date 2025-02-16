@@ -3,7 +3,7 @@ package fr.ecoders.zombie.server;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.LocalGameState;
-import fr.ecoders.zombie.server.PlayerCommand.Action;
+import fr.ecoders.zombie.Action;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -28,7 +28,7 @@ public record CardWithAction(
     var production = camp.production();
     var searchCost = camp.searchCost();
     return production.containsAll(searchCost)
-      && card instanceof Card.Searchable searchable;
+      && card instanceof Card.Searchable;
   }
 
   private static CardWithAction of(Card card, int index, Camp camp) {

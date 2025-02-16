@@ -1,5 +1,6 @@
 package fr.ecoders.zombie.server;
 
+import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
@@ -19,7 +20,7 @@ public final class InGame implements WebSocketServerState {
   private static final String ALREADY_PLAYED = "ALREADY_PLAYED";
 
   private static Game.PlayerInfo player(WebSocketConnection connection, Camp camp) {
-    var queue = new SynchronousQueue<PlayerCommand.Action>();
+    var queue = new SynchronousQueue<Action>();
     var userdata = connection.userData();
     var username = userdata.get(USERNAME_KEY);
     userdata.put(ACTION_QUEUE_KEY, queue);
@@ -52,7 +53,7 @@ public final class InGame implements WebSocketServerState {
     Game.start(players, MIN_PLAYER_COUNT, cards);
   }
 
-  public void onAction(WebSocketConnection connection, PlayerCommand.Action action) {
+  public void onAction(WebSocketConnection connection, Action action) {
     var userdata = connection.userData();
     var queue = userdata.get(ACTION_QUEUE_KEY);
     if (queue == null) {
