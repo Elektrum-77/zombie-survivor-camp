@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Action;
 import fr.ecoders.zombie.Camp;
+import fr.ecoders.zombie.GameOption;
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.LocalGameState;
@@ -291,6 +292,14 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         return context.readTreeAsValue(valueNode, clazz);
       }
     };
+  private static final JsonDeserializer<ResourceBank> RESOURCE_BANK_JSON_DESERIALIZER =
+    new StdDeserializer<>(ResourceBank.class) {
+      @Override
+      public ResourceBank deserialize(JsonParser jsonParser, DeserializationContext context)
+      throws IOException {
+        return new ResourceBank(jsonParser.readValueAs(new TypeReference<HashMap<Resource, Integer>>() {}));
+      }
+    };
   private static final JsonDeserializer<Card> CARD_JSON_DESERIALIZER =
     new StdDeserializer<>(Card.class) {
       @Override
@@ -307,12 +316,18 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         };
       }
     };
-  private static final JsonDeserializer<ResourceBank> RESOURCE_BANK_JSON_DESERIALIZER =
-    new StdDeserializer<>(ResourceBank.class) {
+  private static final JsonDeserializer<GameOption.CardOption> CARD_OPTION_JSON_DESERIALIZER =
+    new StdDeserializer<>(GameOption.CardOption.class) {
       @Override
-      public ResourceBank deserialize(JsonParser jsonParser, DeserializationContext context)
+      public GameOption.CardOption deserialize(JsonParser jsonParser, DeserializationContext context)
       throws IOException {
-        return new ResourceBank(jsonParser.readValueAs(new TypeReference<HashMap<Resource, Integer>>() {}));
+        var codec = jsonParser.getCodec();
+        var root = (JsonNode) codec.readTree(jsonParser);
+        var typeNode = root.get("replica");
+        var replica = typeNode.asInt();
+        try (var p = root.traverse(codec)) {
+          return new GameOption.CardOption(p.readValueAs(Card.class), replica);
+        }
       }
     };
 
@@ -344,6 +359,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addDeserializer(Action.class, ACTION_JSON_DESERIALIZER);
     module.addDeserializer(Card.class, CARD_JSON_DESERIALIZER);
     module.addDeserializer(ResourceBank.class, RESOURCE_BANK_JSON_DESERIALIZER);
+    module.addDeserializer(GameOption.CardOption.class, CARD_OPTION_JSON_DESERIALIZER);
 
     mapper.registerModule(module);
   }

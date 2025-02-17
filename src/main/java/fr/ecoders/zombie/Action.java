@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public sealed interface Action {
 
@@ -76,7 +75,7 @@ public sealed interface Action {
       }
       targetCamp = targetCamp.withZombies(Action.listAdd(targetCamp.zombies(), zombie));
       camps.put(username, targetCamp);
-      return new LocalGameState(camps, List.of(), zombie, hand);
+      return new LocalGameState(camps, hand, state.discards(), state.currentPlayer());
     }
   }
 

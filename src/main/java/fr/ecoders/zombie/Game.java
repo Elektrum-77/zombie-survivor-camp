@@ -26,10 +26,10 @@ public final class Game {
     this.stack = stack;
   }
 
-  public static void start(List<PlayerInfo> infos, int minPlayerCount, List<Card> cards) throws InterruptedException {
-    cards = new ArrayList<>(List.copyOf(cards));
+  public static void start(List<PlayerInfo> infos, GameOption option) throws InterruptedException {
+    var cards = new ArrayList<>(option.cards());
     infos = List.copyOf(infos);
-    if (minPlayerCount < 1) {
+    if (option.minPlayerCount() < 1) {
       throw new IllegalArgumentException("minPlayerCount must be greater than 0");
     }
     var distinctNameCount = infos.stream()
@@ -44,7 +44,7 @@ public final class Game {
     Collections.shuffle(cards);
     var stack = new Stack(cards);
     var camps = infos.stream()
-      .collect(toMap(PlayerInfo::name, PlayerInfo::camp, (_, _) -> null, LinkedHashMap::new));
+      .collect(toMap(PlayerInfo::name, _->option.baseCamp(), (_, _) -> null, LinkedHashMap::new));
     var handlers = infos.stream()
       .collect(toMap(PlayerInfo::name, PlayerInfo::handler, (_, _) -> null, LinkedHashMap::new));
     var game = new Game(camps, handlers, stack);
@@ -54,7 +54,7 @@ public final class Game {
 
       while (!game.isFinished() && !Thread.interrupted()) {
         var activeHandlers = game.activeHandlers();
-        if (activeHandlers.size() < minPlayerCount) {
+        if (activeHandlers.size() < option.minPlayerCount()) {
           LOGGER.info("not enough players to continue, stopping game");
           return;
         }
@@ -102,12 +102,10 @@ public final class Game {
 
   public record PlayerInfo(
     String name,
-    Camp camp,
     Player.Handler handler
   ) {
     public PlayerInfo {
       Objects.requireNonNull(name);
-      Objects.requireNonNull(camp);
       Objects.requireNonNull(handler);
     }
   }

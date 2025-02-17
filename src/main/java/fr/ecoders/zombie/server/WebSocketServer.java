@@ -3,7 +3,8 @@ package fr.ecoders.zombie.server;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.ecoders.zombie.Action;
-import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.GameOption;
+import fr.ecoders.zombie.GameOption.CardOption;
 import fr.ecoders.zombie.server.PlayerCommand.ActionWrapper;
 import fr.ecoders.zombie.server.PlayerCommand.LobbyCommand;
 import io.quarkus.runtime.Quarkus;
@@ -21,6 +22,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
@@ -53,23 +55,26 @@ public class WebSocketServer {
   public WebSocketServer() {
   }
 
-  private List<Card> readAssetCards() throws IOException {
-    var path = "/assets/cards.json";
+  private List<CardOption> readCards(String path) throws IOException {
     try {
       return Optional.ofNullable(getClass().getResourceAsStream(path))
-        .<List<Card>>map(
+        .<List<CardOption>>map(
           inputStream -> {
-            try (var reader = new BufferedReader(new InputStreamReader(inputStream))) {
-              return List.copyOf(mapper.createParser(reader)
-                .readValueAs(new TypeReference<List<Card>>() {}));
+            try (var parser = mapper.createParser(new BufferedReader(new InputStreamReader(inputStream)))) {
+              return List.copyOf(parser.readValueAs(new TypeReference<List<CardOption>>() {}));
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
           })
-        .orElseThrow(() -> new AssertionError("Cards file '" + path + "' not found"));
+        .orElseThrow(() -> new FileNotFoundException("Cards file '" + path + "' not found"));
     } catch (UncheckedIOException e) {
       throw e.getCause();
     }
+  }
+
+  private GameOption readGameOption() throws IOException {
+    var cardPath = "/assets/cards.json";
+    return GameOption.defaultOption(readCards(cardPath));
   }
 
   void onStart(@Observes StartupEvent e) {
@@ -86,8 +91,10 @@ public class WebSocketServer {
             state = new InGame();
             LOGGER.info("In game");
             try {
-              InGame.start(connections, readAssetCards());
-            } catch (RuntimeException ae) { /* reset server state */ }
+              InGame.start(connections, readGameOption());
+            } catch (RuntimeException ae) {
+              LOGGER.log(Level.WARNING, "Restarting game due to RuntimeException", ae);
+            }
           }
         } catch (InterruptedException ex) { /* exit thread */ } catch (IOException ex) {
           LOGGER.log(Level.SEVERE, "Closing server due to IOException", ex);

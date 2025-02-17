@@ -1,7 +1,6 @@
 package fr.ecoders.zombie;
 
 import fr.ecoders.zombie.card.Card;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,17 +29,17 @@ public record LocalGameState(
   public LocalGameState withCamp(Camp camp) {
     var camps = new HashMap<>(this.camps);
     camps.put(currentPlayer, camp);
-    return new LocalGameState(camps, hand, currentPlayer);
+    return new LocalGameState(camps, hand, discards, currentPlayer);
   }
 
   public LocalGameState withUserCamp(String username, Camp camp) {
     var camps = new HashMap<>(this.camps);
     camps.put(username, camp);
-    return new LocalGameState(camps, hand, currentPlayer);
+    return new LocalGameState(camps, hand, discards, currentPlayer);
   }
 
   public LocalGameState withHand(List<Card> hand) {
-    return new LocalGameState(camps, hand, currentPlayer);
+    return new LocalGameState(camps, hand, discards, currentPlayer);
   }
 
   public Camp userCamp(String username) {
