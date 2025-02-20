@@ -66,7 +66,7 @@ public final class Game {
           .map(e -> {
             var name = e.getKey();
             var handler = e.getValue();
-            return AskAction.asking(handler, game.gameState(name), executor);
+            return AskAction.asking(handler, game.localState(name), executor);
           })
           .toList();
 
@@ -78,7 +78,8 @@ public final class Game {
           var future = o.answer();
           try {
             var turn = future.get();
-            var state = turn.play(localGameState);
+            var state = turn.play(game.localState(username));
+            // TODO update game from state
           } catch (ExecutionException ex) {
             game.activeHandlers.remove(username);
             game.discardAll(hand);
@@ -92,7 +93,7 @@ public final class Game {
     }
   }
 
-  private LocalGameState gameState(String player) {
+  private LocalGameState localState(String player) {
     return new LocalGameState(camps, stack.draw(3), List.of(), player);
   }
 
