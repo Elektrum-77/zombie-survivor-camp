@@ -5,7 +5,7 @@ import { useLocalStorage, useWebSocket } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
 import Game from "@/Game.vue";
 import { type Event, useChat, useGame, useLobby } from "@/game.ts";
-import type {Action} from "@/Action.ts";
+import type { Action } from "@/Action.ts";
 
 const username = useLocalStorage("username", "")
 
@@ -31,6 +31,11 @@ const {status, send, open} = useWebSocket(() =>
       case "NAME_ALREADY_USED":
         console.log("received :", data)
         addSystemMessage("User name already taken, please choose another one")
+        socket.close()
+        return
+      case "ALREADY_PLAYED":
+        console.log("received :", data)
+        addSystemMessage("You already ended your turn. Wait for the others.")
         socket.close()
         return
       default:

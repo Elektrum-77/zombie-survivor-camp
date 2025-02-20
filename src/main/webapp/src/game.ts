@@ -12,11 +12,6 @@ export type GameState = {
 }
 export type Hand = GameState["hand"]
 
-export type LobbyPlayer = {
-  username: string
-  isReady: boolean
-}
-
 export type Camp = {
   maxBuildCount: number
   availableSpace: number
@@ -37,7 +32,10 @@ export type TurnUpdateEvent = { type: "TurnUpdate"; value: GameState }
 export type TurnStartEvent = { type: "TurnStart"; value: GameState }
 export type TurnEndEvent = { type: "TurnEnd"; value: GameState }
 export type ChatEvent = { type: "ChatMessage"; value: Message }
-export type ConnectedEvent = { type: "ConnectedPlayers"; value: string[] }
+export type ConnectedEvent = {
+  type: "ConnectedPlayers";
+  value: { username: string; isReady: boolean }[]
+}
 
 export type Event = ChatEvent | LobbyEvent | GameEvent | ConnectedEvent
 
@@ -49,14 +47,17 @@ export function useLobby() {
   function onMessage(event: LobbyEvent | ConnectedEvent) {
     switch (event.type) {
       case "ConnectedPlayers":
-        players.value = Object.fromEntries(event.value.map(p => [p, false]))
+        players.value = Object.fromEntries(event.value.map(
+          ({username, isReady}) => [username, isReady]))
         return
       case "LobbyEvent":
         const {state, username} = event.value
         switch (state) {
           case "CONNECT":
           case "UNREADY":
+            console.log(players.value)
             players.value[username] = false
+            console.log(players.value)
             return
           case "READY":
             players.value[username] = true

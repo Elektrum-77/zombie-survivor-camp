@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { shallowRef, watch } from "vue";
 
-const {players} = defineProps<{
+defineProps<{
   players: Record<string, boolean>
 }>()
 
@@ -24,8 +24,8 @@ watch(() => ready.value, isReady => emit("ready", isReady))
       <h2>Lobby</h2>
       <div class="row player-list">
         <div v-for="(isReady, username) in players" class="col player">
-          <span class="username">{{username}}</span>
-          <span :ready="isReady">{{readyLabel(isReady)}}</span>
+          <span class="username" v-text="username"/>
+          <span :ready="isReady" v-text="readyLabel(isReady)"/>
         </div>
       </div>
       <button @click="ready = !ready">{{readyLabel(!ready)}}</button>
