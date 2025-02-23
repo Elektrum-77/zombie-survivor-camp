@@ -1,149 +1,118 @@
 package fr.ecoders.zombie;
 
-import fr.ecoders.zombie.card.Card;
+import static java.lang.Thread.currentThread;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import static java.util.stream.Collectors.toMap;
+import java.util.stream.Collectors;
 
 public final class Game {
   private static final Logger LOGGER = Logger.getLogger(Game.class.getName());
-  private final LinkedHashMap<String, Camp> camps;
-  private final LinkedHashMap<String, Player.Handler> activeHandlers;
-  private final Stack stack;
+  private final HashMap<String, PlayerHandler> handlers;
+  private final ArrayList<String> playerOrder;
+  private final GameOption option;
+  private GameState state;
 
-  private Game(LinkedHashMap<String, Camp> camps, LinkedHashMap<String, Player.Handler> activeHandlers, Stack stack) {
-    this.camps = camps;
-    this.activeHandlers = activeHandlers;
-    this.stack = stack;
+  private Game(HashMap<String, PlayerHandler> handlers, ArrayList<String> playerOrder, GameOption option,
+    GameState state) {
+    this.handlers = handlers;
+    this.playerOrder = playerOrder;
+    this.option = option;
+    this.state = state;
   }
 
-  public static void start(List<PlayerInfo> infos, GameOption option) throws InterruptedException {
-    var cards = new ArrayList<>(option.cards());
-    infos = List.copyOf(infos);
-    if (option.minPlayerCount() < 1) {
-      throw new IllegalArgumentException("minPlayerCount must be greater than 0");
+
+  public static void start(Map<String, ? extends PlayerHandler> handlers, List<String> playerOrder, GameOption option) {
+    handlers = Map.copyOf(handlers);
+    playerOrder = List.copyOf(playerOrder);
+    Objects.requireNonNull(option);
+
+    var shuffledCards = new ArrayList<>(option.cards());
+    Collections.shuffle(shuffledCards);
+
+    var players = playerOrder.stream()
+      .collect(Collectors.toUnmodifiableMap(Function.identity(), _ -> new Player(option.baseCamp(), List.of())));
+    var initialState = new GameState(option, players, shuffledCards, List.of());
+    var game = new Game(new HashMap<>(handlers), new ArrayList<>(playerOrder), option, initialState);
+    game.play();
+  }
+
+  private void play() {
+    for (int phase = 0; phase < option.phaseCount() && hasEnoughPlayer(); phase++) {
+      playPhase(phase);
     }
-    var distinctNameCount = infos.stream()
-      .map(PlayerInfo::name)
-      .distinct()
-      .count();
-    if (distinctNameCount != infos.size()) {
-      throw new IllegalArgumentException("Some players have the same name");
-    }
+  }
 
+  private boolean hasEnoughPlayer() {
+    return playerOrder.size() >= option.minPlayerCount();
+  }
 
-    Collections.shuffle(cards);
-    var stack = new Stack(cards);
-    var camps = infos.stream()
-      .collect(toMap(PlayerInfo::name, _->option.baseCamp(), (_, _) -> null, LinkedHashMap::new));
-    var handlers = infos.stream()
-      .collect(toMap(PlayerInfo::name, PlayerInfo::handler, (_, _) -> null, LinkedHashMap::new));
-    var game = new Game(camps, handlers, stack);
-    LOGGER.info("Turn evaluation order defined as " + handlers.keySet());
+  private void playRound(int round) {
+    System.out.println("Starting round " + (round + 1) + " of " + option.phaseTurnCount());
+    var lock = new Object();
+    var turns = new HashMap<String, PlayerTurn>();
+    state = state.withDrawnPlayersCards();
 
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    synchronized (lock) {
+      // ask players what to do
+      var threads = playerOrder.stream()
+        .map(player -> {
+          var handler = handlers.get(player);
+          return Thread.ofVirtual()
+            .name("Turn handler of " + player)
+            .start(() -> {
+              try {
+                var turn = handler.buildTurn(PlayerTurn.builder(state, player));
+                synchronized (lock) {
+                  turns.put(player, turn);
+                  lock.notifyAll();
+                }
+              } catch (InterruptedException e) {
+                LOGGER.log(Level.WARNING, "Player " + player + " disconnected due to InterruptedException.", e);
+                synchronized (lock) {
+                  handlers.remove(player);
+                  playerOrder.remove(player);
+                  lock.notifyAll();
+                }
+              }
+            });
+        })
+        .toList();
 
-      while (!game.isFinished() && !Thread.interrupted()) {
-        var activeHandlers = game.activeHandlers();
-        if (activeHandlers.size() < option.minPlayerCount()) {
-          LOGGER.info("not enough players to continue, stopping game");
-          return;
-        }
-
-        // build all players' turn
-        var futures = game.activeHandlers()
-          .entrySet()
-          .stream()
-          .map(e -> {
-            var name = e.getKey();
-            var handler = e.getValue();
-            return AskAction.asking(handler, game.localState(name), executor);
-          })
-          .toList();
-
-        // apply all turns
-        for (var o : futures) {
-          var localGameState = o.localGameState();
-          var hand = new ArrayList<>(localGameState.hand());
-          var username = localGameState.currentPlayer();
-          var future = o.answer();
-          try {
-            var turn = future.get();
-            var state = turn.play(game.localState(username));
-            // TODO update game from state
-          } catch (ExecutionException ex) {
-            game.activeHandlers.remove(username);
-            game.discardAll(hand);
-            var cause = ex.getCause();
-            if (!(cause instanceof InterruptedException)) {
-              throw new AssertionError("An error occurred while waiting for " + username + "'s action", cause);
-            }
-          }
+      // waits all player
+      if (turns.size() != playerOrder.size()) {
+        try {
+          lock.wait();
+        } catch (InterruptedException e) {
+          LOGGER.log(Level.WARNING, "Interrupting all handlers threads due to InterruptedException.", e);
+          threads.forEach(Thread::interrupt);
+          currentThread().interrupt();
         }
       }
+
+      if (!hasEnoughPlayer()) {
+        return;
+      }
+
+      // process players' turn
+      for (var player : playerOrder) {
+        var turn = turns.get(player);
+        state = turn.play(state, player);
+      }
+    }
+
+  }
+
+  private void playPhase(int phase) {
+    System.out.println("Starting phase " + (phase + 1) + " of " + option.phaseCount());
+    for (int i = 0; i < option.phaseTurnCount() && hasEnoughPlayer(); i++) {
+      playRound(i);
     }
   }
-
-  private LocalGameState localState(String player) {
-    return new LocalGameState(camps, stack.draw(3), List.of(), player);
-  }
-
-  private Map<String, Player.Handler> activeHandlers() {
-    return Map.copyOf(activeHandlers);
-  }
-
-  public record PlayerInfo(
-    String name,
-    Player.Handler handler
-  ) {
-    public PlayerInfo {
-      Objects.requireNonNull(name);
-      Objects.requireNonNull(handler);
-    }
-  }
-
-  public Camp camp(String username) {
-    if (!camps.containsKey(username)) {
-      throw new IllegalArgumentException("Player " + username + " does not exist");
-    }
-    return camps.get(username);
-  }
-
-  public void setCamp(String username, Camp camp) {
-    Objects.requireNonNull(username);
-    Objects.requireNonNull(camp);
-    if (!camps.containsKey(username)) {
-      throw new IllegalArgumentException("Player " + username + " does not exist");
-    }
-    camps.put(username, camp);
-  }
-
-  public void discardAll(List<Card> cards) {
-    cards = List.copyOf(cards);
-    stack.discardAll(cards);
-  }
-
-  private record AskAction(
-    LocalGameState localGameState,
-    Future<PlayerTurn> answer) {
-    private static AskAction asking(Player.Handler handler, LocalGameState localGameState, ExecutorService executor) {
-      return new AskAction(
-        localGameState,
-        executor.submit(() -> handler.buildTurn(PlayerTurn.builder(localGameState))));
-    }
-  }
-
-  private boolean isFinished() {
-    return stack.isEmpty();
-  }
-
 }

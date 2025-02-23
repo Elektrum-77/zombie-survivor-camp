@@ -24,8 +24,6 @@ public interface GameOption {
       .map(opt -> Collections.nCopies(opt.replica(), opt.card()))
       .flatMap(Collection::stream)
       .toList();
-    System.out.println(cardOptions);
-    System.out.println(cards);
     var buildings = cards.stream()
       .map(c -> c instanceof Building b ? b : null)
       .filter(Objects::nonNull)

@@ -5,13 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiPredicate;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.summingInt;
 import java.util.stream.Stream;
 
 public record ResourceBank(Map<Resource, Integer> resources) {
-  public static final ResourceBank EMPTY = new ResourceBank(Map.of());
-
   public ResourceBank {
     resources = validateResources(resources);
   }
@@ -68,20 +67,29 @@ public record ResourceBank(Map<Resource, Integer> resources) {
       .allMatch(e -> contains(e.getKey(), e.getValue()));
   }
 
-  public ResourceBank remove(Resource resource, int amount) {
+  public int missing(Resource resource, int amount) {
     Objects.requireNonNull(resource);
-    var resources = new HashMap<>(add(resource, -amount).resources);
-    resources.values()
-      .removeIf(v -> v == 0);
-    return new ResourceBank(resources);
+    return Math.max(amount - resources.getOrDefault(resource, 0), 0);
   }
 
-  public ResourceBank removeAll(ResourceBank other) {
+  public ResourceBank missingAll(ResourceBank other) {
     Objects.requireNonNull(other);
-    var resources = new HashMap<>(addAll(other.multiply(-1)).resources);
-    resources.values()
-      .removeIf(v -> v == 0);
-    return new ResourceBank(resources);
+    var resources = new HashMap<>(this.resources);
+    var filter = resources.keySet();
+    resources.keySet()
+      .removeIf(not(filter::contains));
+    var missing = other.subtractAll(new ResourceBank(resources));
+    return missing.subtractAll(missing.filterNegative()); // only positives
+  }
+
+  public ResourceBank subtract(Resource resource, int amount) {
+    Objects.requireNonNull(resource);
+    return add(resource, amount * -1);
+  }
+
+  public ResourceBank subtractAll(ResourceBank other) {
+    Objects.requireNonNull(other);
+    return addAll(other.multiply(-1));
   }
 
   public ResourceBank filter(BiPredicate<Resource, Integer> predicate) {

@@ -2,17 +2,10 @@ package fr.ecoders.zombie;
 
 import fr.ecoders.zombie.card.Card;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
 public sealed interface Action {
-
-  static private <E> List<E> listRemove(List<E> l, int i) {
-    l = new ArrayList<>(l);
-    l.remove(i);
-    return l;
-  }
 
   static private <E> List<E> listAdd(List<E> l, E e) {
     l = new ArrayList<>(l);
@@ -20,7 +13,12 @@ public sealed interface Action {
     return l;
   }
 
-  LocalGameState play(LocalGameState state);
+  static private void validateNotMissing(ResourceBank production, ResourceBank subtracting) {
+    var missing = production.missingAll(subtracting);
+    if (!missing.isEmpty()) {
+      throw new IllegalArgumentException("Production is missing " + missing);
+    }
+  }
 
   static private Card handCard(ArrayList<Card> hand, int index) {
     Objects.checkIndex(index, hand.size());
@@ -51,84 +49,81 @@ public sealed interface Action {
     return searchable;
   }
 
-  static private void validateCost(ResourceBank production, ResourceBank cost) {
-    if (production.containsAll(cost)) {
-      return;
-    }
-    var missing = production.removeAll(cost)
-      .filterNegative()
-      .multiply(-1);
-    throw new IllegalArgumentException("Production is missing " + missing);
-  }
+  GameState play(GameState state, String currentUsername);
 
   record AddZombie(
     String username,
     int index) implements Action {
-    public LocalGameState play(LocalGameState state) {
-      Objects.requireNonNull(state);
-      var camps = new HashMap<>(state.camps());
-      var hand = new ArrayList<>(state.hand());
+
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var currentPlayer = state.player(currentUsername);
+      var hand = new ArrayList<>(currentPlayer.hand());
+      Objects.checkIndex(index, hand.size());
       var zombie = handZombie(hand, index);
-      var targetCamp = camps.get(username);
-      if (targetCamp == null) {
-        throw new IllegalArgumentException("User " + username + " not found");
-      }
-      targetCamp = targetCamp.withZombies(Action.listAdd(targetCamp.zombies(), zombie));
-      camps.put(username, targetCamp);
-      return new LocalGameState(camps, hand, state.discards(), state.currentPlayer());
+      state = state.withPlayer(currentUsername, currentPlayer.withHand(hand));
+
+      var target = state.player(username);
+      var camp = target.camp();
+      return state.withPlayer(username, target.withCamp(camp.withZombies(listAdd(camp.zombies(), zombie))));
     }
   }
 
   record CancelSearch(int index) implements Action {
-    public LocalGameState play(LocalGameState state) {
-      Objects.requireNonNull(state);
-      var camp = state.camp();
-      var cost = camp.searches()
-        .get(index)
-        .search();
-      validateCost(camp.production(), cost);
-      camp = camp.withSearches(listRemove(camp.searches(), index));
-      return state.withCamp(camp);
+
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var camp = player.camp();
+      var searches = new ArrayList<>(camp.searches());
+      var search = searches.remove(index);
+      validateNotMissing(camp.production(), search.search());
+      return state.withPlayer(currentUsername, player.withCamp(camp.withSearches(searches)));
     }
   }
 
   record DestroyBuilding(int index) implements Action {
-    public LocalGameState play(LocalGameState state) {
-      Objects.requireNonNull(state);
-      var camp = state.camp();
-      var cost = camp.buildings()
-        .get(index)
-        .production();
-      validateCost(camp.production(), cost);
-      camp = camp.withBuildings(listRemove(camp.buildings(), index));
-      return state.withCamp(camp);
+
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var camp = player.camp();
+      var buildings = new ArrayList<>(camp.buildings());
+      var building = buildings.remove(index);
+      validateNotMissing(camp.production(), building.production());
+      return state.withPlayer(currentUsername, player.withCamp(camp.withBuildings(buildings)));
     }
   }
 
   record Construct(int index) implements Action {
-    public LocalGameState play(LocalGameState state) {
-      Objects.requireNonNull(state);
-      var hand = new ArrayList<>(state.hand());
-      var camps = new HashMap<>(state.camps());
-      var camp = state.camp();
-      var buildable = handBuildable(hand, index);
-      validateCost(camp.production(), buildable.cost());
-      camp = camp.withBuildings(listAdd(camp.buildings(), buildable));
-      camps.put(state.currentPlayer(), camp);
-      return new LocalGameState(camps, hand, state.discards(), state.currentPlayer());
+
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var camp = player.camp();
+      var hand = new ArrayList<>(player.hand());
+      var building = handBuildable(hand, index);
+      validateNotMissing(camp.production(), building.cost());
+      camp = camp.withBuildings(listAdd(camp.buildings(), building));
+      player = player.withHand(hand)
+        .withCamp(camp);
+      return state.withPlayer(currentUsername, player);
     }
   }
 
   record Search(int index) implements Action {
-    public LocalGameState play(LocalGameState state) {
-      var camps = new HashMap<>(state.camps());
-      var camp = state.camp();
-      var hand = new ArrayList<>(state.hand());
-      var searchable = handSearchable(hand, index);
-      validateCost(camp.production(), camp.searchCost());
-      camp = camp.withSearches(listAdd(camp.searches(), searchable));
-      camps.put(state.currentPlayer(), camp);
-      return new LocalGameState(camps, hand, state.discards(), state.currentPlayer());
+
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var camp = player.camp();
+      var hand = new ArrayList<>(player.hand());
+      var search = handSearchable(hand, index);
+      validateNotMissing(camp.production(), camp.searchCost());
+      camp = camp.withSearches(listAdd(camp.searches(), search));
+      player = player.withHand(hand)
+        .withCamp(camp);
+      return state.withPlayer(currentUsername, player);
     }
   }
 }

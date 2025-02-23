@@ -1,19 +1,22 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.card.Card;
+import java.util.List;
 import java.util.Objects;
 
 public record Player(
-  String name,
   Camp camp,
-  Handler handler) {
+  List<Card> hand) {
   public Player {
-    Objects.requireNonNull(name);
     Objects.requireNonNull(camp);
-    Objects.requireNonNull(handler);
+    hand = List.copyOf(hand);
   }
 
-  @FunctionalInterface
-  public interface Handler {
-    PlayerTurn buildTurn(PlayerTurn.Builder builder) throws InterruptedException;
+  public Player withCamp(Camp camp) {
+    return new Player(camp, hand); // implicit check
+  }
+
+  public Player withHand(List<Card> hand) {
+    return new Player(camp, hand); // implicit check
   }
 }

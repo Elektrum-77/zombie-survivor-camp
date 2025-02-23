@@ -9,34 +9,35 @@ import static fr.ecoders.zombie.server.WebSocketServer.USERNAME_KEY;
 import io.quarkus.websockets.next.OpenConnections;
 import io.quarkus.websockets.next.WebSocketConnection;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
-import java.util.concurrent.SynchronousQueue;
+import java.util.stream.Collectors;
 
 public final class InGame implements WebSocketServerState {
   private static final String ALREADY_PLAYED = "ALREADY_PLAYED";
 
-  private static Game.PlayerInfo player(WebSocketConnection connection) {
-    var queue = new SynchronousQueue<Action>();
-    var userdata = connection.userData();
-    var username = userdata.get(USERNAME_KEY);
-    userdata.put(ACTION_QUEUE_KEY, queue);
-    var handler = new WebSocketPlayerHandler(connection);
-    return new Game.PlayerInfo(username, handler);
+  private static String username(WebSocketConnection connection) {
+    return connection.userData()
+      .get(USERNAME_KEY);
   }
 
   public static void start(OpenConnections connections, GameOption option) throws InterruptedException, IOException {
     Objects.requireNonNull(connections);
-    var players = connections.stream()
-      .map(InGame::player)
-      .toList();
-    Game.start(players, option);
+    var handlers = connections.stream()
+      .collect(Collectors.toUnmodifiableMap(InGame::username, WebSocketPlayerHandler::of));
+    var playerOrder = new ArrayList<>(handlers.keySet());
+    Collections.shuffle(playerOrder);
+    System.out.println("Player evaluation order: " + playerOrder);
+    Game.start(handlers, playerOrder, option);
   }
 
   public void onAction(WebSocketConnection connection, Action action) {
     var userdata = connection.userData();
     var queue = userdata.get(ACTION_QUEUE_KEY);
     if (queue == null) {
-      throw new AssertionError("queue is null");
+      var username = userdata.get(USERNAME_KEY);
+      throw new IllegalStateException("action queue is null for player " + username);
     }
     if (!queue.offer(action)) {
       connection.sendTextAndAwait(ALREADY_PLAYED);
