@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Card } from "@/card/Card.ts";
-import CardView from "@/card/CardView.vue";
+import type { Card } from "@/game/card/Card.ts";
+import CardView from "@/game/card/CardView.vue";
 import { Icon } from "@iconify/vue";
 import { ref } from "vue";
 import { vElementHover, vOnClickOutside } from "@vueuse/components";

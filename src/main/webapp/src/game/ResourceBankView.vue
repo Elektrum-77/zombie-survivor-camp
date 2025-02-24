@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { ResourceBank } from "@/ResourceBank.ts";
-import ResourceView from "@/ResourceView.vue";
+import type { ResourceBank } from "@/game/ResourceBank.ts";
+import ResourceView from "@/game/ResourceView.vue";
 
 defineProps<{ opposite?: boolean, bank: ResourceBank }>()
 </script>

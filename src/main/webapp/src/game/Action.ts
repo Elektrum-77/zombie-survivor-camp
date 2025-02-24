@@ -1,6 +1,6 @@
-import type { Camp } from "@/game.ts";
-import type { Card } from "@/card/Card.ts";
-import { bankContainsAll } from "@/ResourceBank.ts";
+import type { Camp } from "@/game/game.ts";
+import type { Card } from "@/game/card/Card.ts";
+import { bankContainsAll } from "@/game/ResourceBank.ts";
 
 export type Action = {
   type: "Construct"

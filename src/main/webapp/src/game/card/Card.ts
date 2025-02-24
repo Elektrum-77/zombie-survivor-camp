@@ -1,4 +1,4 @@
-import type { ResourceBank } from "@/ResourceBank.ts";
+import type { ResourceBank } from "@/game/ResourceBank.ts";
 
 export type Card = {
   type: "Building"

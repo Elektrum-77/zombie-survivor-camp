@@ -3,9 +3,9 @@ import Login from "@/Login.vue";
 import Chat from "@/Chat.vue";
 import { useLocalStorage, useWebSocket } from "@vueuse/core";
 import Lobby from "@/Lobby.vue";
-import Game from "@/Game.vue";
-import { type Event, useChat, useGame, useLobby } from "@/game.ts";
-import type { Action } from "@/Action.ts";
+import Game from "@/game/Game.vue";
+import { type Event, useChat, useGame, useLobby } from "@/game/game.ts";
+import type { Action } from "@/game/Action.ts";
 
 const username = useLocalStorage("username", "")
 
@@ -23,6 +23,11 @@ const {status, send, open} = useWebSocket(() =>
   onError: (socket, err) => console.warn("connection error", err),
   onMessage: (socket, {data}: MessageEvent<string>) => {
     switch (data) {
+      case "SERVER_IS_STARTING":
+        console.log("received :", data)
+        addSystemMessage("Server is starting, retry after a few seconds")
+        socket.close()
+        return
       case "GAME_ALREADY_STARTED":
         console.log("received :", data)
         addSystemMessage("User name already taken, please choose another one")

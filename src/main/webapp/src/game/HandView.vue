@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Camp, Hand } from "@/game.ts";
-import type {Action} from "@/Action.ts";
-import CardViewAction from "@/card/CardViewAction.vue";
+import type { Camp, Hand } from "@/game/game.ts";
+import type {Action} from "@/game/Action.ts";
+import CardViewAction from "@/game/card/CardViewAction.vue";
 
 const {hand} = defineProps<{ camp: Camp, hand: Hand }>()
 defineEmits<{ action: [Action] }>()

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Card } from "@/card/Card.ts";
+import type { Card } from "@/game/card/Card.ts";
 import { computed, ref } from "vue";
-import CardView from "@/card/CardView.vue";
-import type { Action } from "@/Action.ts";
+import CardView from "@/game/card/CardView.vue";
+import type { Action } from "@/game/Action.ts";
 import { vElementHover, vOnClickOutside } from "@vueuse/components";
-import ActionList from "@/ActionList.vue";
+import ActionList from "@/game/ActionList.vue";
 import { ICON_ACTION } from "@/icon.ts";
 
 defineProps<{ card: Card, actions: Action[] }>()

@@ -1,20 +1,25 @@
 <script setup lang="ts">
-import type { Card } from "@/card/Card.ts";
-import DummyView from "@/card/DummyView.vue";
-import BuildingView from "@/card/BuildingView.vue";
+import type { Card } from "@/game/card/Card.ts";
+import DummyView from "@/game/card/DummyView.vue";
+import BuildingView from "@/game/card/BuildingView.vue";
+import { CARD_IMG } from "@/assets/cards.ts";
+import { computed } from "vue";
 
-defineProps<{ card: Card }>()
+const {card} = defineProps<{ card: Card }>()
 
 const contentViews = {
   "Building": BuildingView,
   "Dummy": DummyView,
 } as const
+
+const imgName = computed<string>(()=>card.value.name.toLowerCase().replaceAll(' ', '_'))
 </script>
 
 <template>
   <div class="card-layout">
     <span class="title" v-text="card.value.name"/>
-    <span/>
+    <img v-if="imgName in CARD_IMG" :src="CARD_IMG[imgName]" alt="no image found"/>
+    <div v-else/>
     <component :is="contentViews[card.type]" v-bind="card.value"/>
   </div>
 </template>
@@ -24,6 +29,12 @@ const contentViews = {
   font-weight: bold;
   font-size: 1rem;
 }
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .card-layout {
   background-color: white;
   padding: 8px;

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { GameState } from "@/game.ts";
-import CampSelector from "@/CampSelector.vue";
-import CampView from "@/CampView.vue";
-import type {Action} from "@/Action.ts";
-import HandView from "@/HandView.vue";
+import type { GameState } from "@/game/game.ts";
+import CampSelector from "@/game/camp/CampSelector.vue";
+import CampView from "@/game/camp/CampView.vue";
+import type {Action} from "@/game/Action.ts";
+import HandView from "@/game/HandView.vue";
 import {ref, shallowRef} from "vue";
 import {onKeyStroke} from "@vueuse/core";
 

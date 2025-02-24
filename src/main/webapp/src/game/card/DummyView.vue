@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Dummy } from "@/card/Card.ts";
+import type { Dummy } from "@/game/card/Card.ts";
 
 defineProps<Dummy>()
 </script>

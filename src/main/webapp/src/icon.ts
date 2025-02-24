@@ -1,5 +1,5 @@
-import type { Resource } from "@/ResourceBank.ts";
-import type { ActionType } from "@/Action.ts";
+import type { Resource } from "@/game/ResourceBank.ts";
+import type { ActionType } from "@/game/Action.ts";
 
 export const ICON_ACTION_CONSTRUCT = "mdi:hammer-screwdriver"
 export const ICON_ACTION_SEARCH = "mdi:search"

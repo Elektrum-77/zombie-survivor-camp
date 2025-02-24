@@ -1,7 +1,7 @@
 import type { Message } from "@/Chat.vue";
-import type { Card } from "@/card/Card.ts";
-import type { ResourceBank } from "@/ResourceBank.ts";
-import type { Action } from "@/Action.ts";
+import type { Card } from "@/game/card/Card.ts";
+import type { ResourceBank } from "@/game/ResourceBank.ts";
+import type { Action } from "@/game/Action.ts";
 import { ref, shallowRef } from "vue";
 import { now } from "@vueuse/core";
 

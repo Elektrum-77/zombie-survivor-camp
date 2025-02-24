@@ -2,7 +2,7 @@
 
 import { ICON_RESOURCES } from "@/icon.ts";
 import { Icon } from "@iconify/vue";
-import type { Resource } from "@/ResourceBank.ts";
+import type { Resource } from "@/game/ResourceBank.ts";
 
 defineProps<{ resource: Resource, count: number }>()
 </script>

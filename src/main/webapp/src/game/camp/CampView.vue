@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Camp } from "@/game.ts";
-import ResourceBankView from "@/ResourceBankView.vue";
-import type { Action } from "@/Action.ts";
-import CardViewAction from "@/card/CardViewAction.vue";
+import type { Camp } from "@/game/game.ts";
+import ResourceBankView from "@/game/ResourceBankView.vue";
+import type { Action } from "@/game/Action.ts";
+import CardViewAction from "@/game/card/CardViewAction.vue";
 
 defineProps<Camp>()
 defineEmits<{ action: Action[] }>()
