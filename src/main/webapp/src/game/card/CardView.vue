@@ -18,7 +18,9 @@ const imgName = computed<string>(()=>card.value.name.toLowerCase().replaceAll(' 
 <template>
   <div class="card-layout">
     <span class="title" v-text="card.value.name"/>
-    <img v-if="imgName in CARD_IMG" :src="CARD_IMG[imgName]" alt="no image found"/>
+    <div v-if="imgName in CARD_IMG" class="img-wrapper">
+      <img :src="CARD_IMG[imgName]" alt="no image found"/>
+    </div>
     <div v-else/>
     <component :is="contentViews[card.type]" v-bind="card.value"/>
   </div>
@@ -33,15 +35,22 @@ const imgName = computed<string>(()=>card.value.name.toLowerCase().replaceAll(' 
 img {
   max-width: 100%;
   max-height: 100%;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.img-wrapper {
+  overflow: hidden;
 }
 
 .card-layout {
+  --radius: 0.5rem;
   background-color: white;
   padding: 8px;
   display: grid;
   grid-template-rows: 2rem 10rem 7rem;
   width: 15rem;
   border: 1px solid #ddd;
-  border-radius: 0.5rem;
+  border-radius: var(--radius);
 }
 </style>
