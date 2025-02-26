@@ -1,14 +1,17 @@
 package fr.ecoders.zombie.card;
 
-import fr.ecoders.zombie.ResourceBank;
+import fr.ecoders.zombie.state.ResourceBank;
 import java.util.Objects;
+import java.util.Optional;
 
 public record Building(
   String name,
   ResourceBank cost,
   ResourceBank production,
+  Optional<ResourceBank> electrified,
+  Optional<Category> category,
   ResourceBank search
-) implements Card.Searchable, Card.Buildable {
+) implements Card.Searchable, Card {
   public Building {
     Objects.requireNonNull(name);
     Objects.requireNonNull(cost);
@@ -22,5 +25,9 @@ public record Building(
     if (!cost.containsAll(productionCost)) {
       cost = cost.addAll(productionCost);
     }
+  }
+
+  public enum Category {
+    AGRICULTURAL, STOCKAGE, WORKBENCH, WATCH_TOWER
   }
 }

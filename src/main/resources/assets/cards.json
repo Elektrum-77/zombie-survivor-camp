@@ -250,5 +250,11 @@
     "name": "Wandering zombies",
     "count": 5,
     "replica": 6
+  },
+  {
+    "type": "Upgrade",
+    "name": "Wandering zombies",
+    "count": 5,
+    "replica": 6
   }
 ]

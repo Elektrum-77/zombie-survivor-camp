@@ -1,10 +1,13 @@
 package fr.ecoders.zombie;
 
-import fr.ecoders.zombie.Action.AddZombie;
+import fr.ecoders.zombie.Action.UpgradeBuilding;
+import fr.ecoders.zombie.Action.SendZombie;
 import fr.ecoders.zombie.Action.CancelSearch;
 import fr.ecoders.zombie.Action.Construct;
 import fr.ecoders.zombie.Action.DestroyBuilding;
 import fr.ecoders.zombie.Action.Search;
+import fr.ecoders.zombie.state.GameState;
+import fr.ecoders.zombie.state.LocalGameState;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +61,7 @@ public final class PlayerTurn {
       }
       state = action.play(state, currentPlayer);
       isDone = switch (action) {
-        case AddZombie _, Construct _, Search _ -> true;
+        case UpgradeBuilding _, SendZombie _, Construct _, Search _ -> true;
         case CancelSearch _, DestroyBuilding _ -> false;
       };
       actions.add(action);

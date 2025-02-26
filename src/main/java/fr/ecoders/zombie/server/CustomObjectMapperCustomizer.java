@@ -1,5 +1,7 @@
 package fr.ecoders.zombie.server;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -14,18 +16,19 @@ import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Action;
-import fr.ecoders.zombie.Camp;
 import fr.ecoders.zombie.GameOption;
+import fr.ecoders.zombie.Resource;
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
-import fr.ecoders.zombie.LocalGameState;
-import fr.ecoders.zombie.Resource;
-import fr.ecoders.zombie.ResourceBank;
 import fr.ecoders.zombie.card.ZombieEvent;
+import fr.ecoders.zombie.state.Camp;
+import fr.ecoders.zombie.state.LocalGameState;
+import fr.ecoders.zombie.state.ResourceBank;
 import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 
 @Singleton
@@ -235,10 +238,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
           case Action.Construct(int index) -> generator.writeNumberField("index", index);
           case Action.DestroyBuilding(int index) -> generator.writeNumberField("index", index);
           case Action.Search(int index) -> generator.writeNumberField("index", index);
-          case Action.AddZombie(String username, int index) -> {
-            generator.writeNumberField("index", index);
-            generator.writeStringField("username", username);
-          }
+          case Action.SendZombie _, Action.UpgradeBuilding _ -> throw new AssertionError("WTF");
         }
         generator.writeEndObject();
         generator.writeEndObject();
@@ -362,5 +362,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addDeserializer(GameOption.CardOption.class, CARD_OPTION_JSON_DESERIALIZER);
 
     mapper.registerModule(module);
+    mapper.configOverride(Collection.class)
+      .setSetterInfo(JsonSetter.Value.forContentNulls(Nulls.AS_EMPTY));
   }
 }

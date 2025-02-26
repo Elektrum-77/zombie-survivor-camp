@@ -1,8 +1,9 @@
 package fr.ecoders.zombie.server;
 
-import fr.ecoders.zombie.Camp;
+import fr.ecoders.zombie.card.Building;
+import fr.ecoders.zombie.state.Camp;
 import fr.ecoders.zombie.card.Card;
-import fr.ecoders.zombie.LocalGameState;
+import fr.ecoders.zombie.state.LocalGameState;
 import fr.ecoders.zombie.Action;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +21,7 @@ public record CardWithAction(
   private static boolean isConstructible(Card card, Camp camp) {
     var production = camp.production();
     return camp.isSpaceAvailable()
-      && card instanceof Card.Buildable buildable
+      && card instanceof Building buildable
       && production.containsAll(buildable.cost());
   }
 

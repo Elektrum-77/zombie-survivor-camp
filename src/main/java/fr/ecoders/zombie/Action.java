@@ -1,6 +1,10 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.state.GameState;
+import fr.ecoders.zombie.state.ResourceBank;
+import fr.ecoders.zombie.state.UpgradableBuilding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,9 +37,9 @@ public sealed interface Action {
     return zombie;
   }
 
-  static private Card.Buildable handBuildable(ArrayList<Card> hand, int index) {
+  static private Building handBuilding(ArrayList<Card> hand, int index) {
     var card = handCard(hand, index);
-    if (!(card instanceof Card.Buildable buildable)) {
+    if (!(card instanceof Building buildable)) {
       throw new IllegalArgumentException("Card " + card + " is not buildable");
     }
     return buildable;
@@ -49,9 +53,39 @@ public sealed interface Action {
     return searchable;
   }
 
+  static private fr.ecoders.zombie.card.Upgrade handUpgrade(ArrayList<Card> hand, int index) {
+    var card = handCard(hand, index);
+    if (!(card instanceof fr.ecoders.zombie.card.Upgrade upgrade)) {
+      throw new IllegalArgumentException("Card " + card + " is not Upgrade");
+    }
+    return upgrade;
+  }
+
   GameState play(GameState state, String currentUsername);
 
-  record AddZombie(
+  record UpgradeBuilding(
+    int upgradeIndex,
+    int buildingIndex) implements Action {
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var camp = player.camp();
+      var hand = new ArrayList<>(player.hand());
+      var upgrade = handUpgrade(hand, upgradeIndex);
+      validateNotMissing(camp.production(), upgrade.cost());
+      var buildings = new ArrayList<>(camp.buildings());
+      var building = buildings.get(buildingIndex);
+
+      building = building.withUpgrades(listAdd(building.upgrades(), upgrade));
+      buildings.set(buildingIndex, building);
+      camp = camp.withBuildings(buildings);
+      player = player.withHand(hand)
+        .withCamp(camp);
+      return state.withPlayer(currentUsername, player);
+    }
+  }
+
+  record SendZombie(
     String username,
     int index) implements Action {
 
@@ -83,7 +117,6 @@ public sealed interface Action {
   }
 
   record DestroyBuilding(int index) implements Action {
-
     @Override
     public GameState play(GameState state, String currentUsername) {
       var player = state.player(currentUsername);
@@ -96,15 +129,14 @@ public sealed interface Action {
   }
 
   record Construct(int index) implements Action {
-
     @Override
     public GameState play(GameState state, String currentUsername) {
       var player = state.player(currentUsername);
       var camp = player.camp();
       var hand = new ArrayList<>(player.hand());
-      var building = handBuildable(hand, index);
+      var building = handBuilding(hand, index);
       validateNotMissing(camp.production(), building.cost());
-      camp = camp.withBuildings(listAdd(camp.buildings(), building));
+      camp = camp.withBuildings(listAdd(camp.buildings(), UpgradableBuilding.ofBuilding(building)));
       player = player.withHand(hand)
         .withCamp(camp);
       return state.withPlayer(currentUsername, player);

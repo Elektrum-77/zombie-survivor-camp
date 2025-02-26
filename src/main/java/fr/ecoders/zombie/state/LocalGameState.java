@@ -1,4 +1,4 @@
-package fr.ecoders.zombie;
+package fr.ecoders.zombie.state;
 
 import fr.ecoders.zombie.card.Card;
 import java.util.HashMap;

@@ -1,5 +1,6 @@
-package fr.ecoders.zombie;
+package fr.ecoders.zombie.state;
 
+import fr.ecoders.zombie.GameOption;
 import fr.ecoders.zombie.card.Card;
 import java.util.ArrayList;
 import java.util.Collections;

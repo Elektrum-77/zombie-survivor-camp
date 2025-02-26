@@ -2,10 +2,13 @@ package fr.ecoders.zombie;
 
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.state.Camp;
+import fr.ecoders.zombie.state.UpgradableBuilding;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 public interface GameOption {
   static GameOption defaultOption(List<CardOption> cardOptions) {
@@ -40,7 +43,11 @@ public interface GameOption {
       .filter(b -> "Vegetable gardens".equals(b.name()))
       .findAny()
       .orElseThrow();
-    var camp = new Camp(6, List.of(campingTents, rainCollectors, vegetableGardens), List.of(), List.of());
+
+    var starterBuildings = Stream.of(campingTents, rainCollectors, vegetableGardens)
+      .map(UpgradableBuilding::ofBuilding)
+      .toList();
+    var camp = new Camp(6, starterBuildings, List.of(), List.of());
     return new Impl(5, 15, 3, 1, camp, cards);
   }
 

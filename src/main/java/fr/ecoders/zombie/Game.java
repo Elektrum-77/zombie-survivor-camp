@@ -1,5 +1,7 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.state.GameState;
+import fr.ecoders.zombie.state.Player;
 import static java.lang.Thread.currentThread;
 import java.util.ArrayList;
 import java.util.Collections;

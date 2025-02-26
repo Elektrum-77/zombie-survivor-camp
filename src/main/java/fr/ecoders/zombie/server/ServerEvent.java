@@ -1,7 +1,7 @@
 package fr.ecoders.zombie.server;
 
 import fr.ecoders.lobby.Lobby;
-import fr.ecoders.zombie.LocalGameState;
+import fr.ecoders.zombie.state.LocalGameState;
 import java.time.Instant;
 import java.util.List;
 
