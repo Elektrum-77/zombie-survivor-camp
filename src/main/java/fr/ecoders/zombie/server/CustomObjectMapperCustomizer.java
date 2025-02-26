@@ -20,6 +20,7 @@ import fr.ecoders.zombie.GameOption;
 import fr.ecoders.zombie.Resource;
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.card.Upgrade;
 import fr.ecoders.zombie.card.ZombieEvent;
 import fr.ecoders.zombie.state.Camp;
 import fr.ecoders.zombie.state.LocalGameState;
@@ -312,6 +313,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         return switch (type) {
           case "Building" -> context.readTreeAsValue(root, Building.class);
           case "Zombie" -> context.readTreeAsValue(root, ZombieEvent.class);
+          case "Upgrade" -> context.readTreeAsValue(root, Upgrade.class);
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
       }

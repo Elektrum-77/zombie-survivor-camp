@@ -253,8 +253,8 @@
   },
   {
     "type": "Upgrade",
-    "name": "Wandering zombies",
-    "count": 5,
+    "name": "TODO",
+    "production": {},
     "replica": 6
   }
 ]
