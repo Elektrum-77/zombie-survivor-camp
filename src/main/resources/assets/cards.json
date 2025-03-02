@@ -253,8 +253,14 @@
   },
   {
     "type": "Upgrade",
-    "name": "TODO",
-    "production": {},
-    "replica": 6
+    "name": "Diesel generator",
+    "isPowerGenerator": true,
+    "production": {
+      "FUEL": -1
+    },
+    "cost": {
+      "MATERIALS": 1
+    },
+    "replica": 3
   }
 ]

@@ -20,8 +20,7 @@ public record Building(
     if (name.isBlank()) {
       throw new IllegalArgumentException("name cannot be blank");
     }
-    var productionCost = production.filterNegative()
-      .multiply(-1);
+    var productionCost = production.cost();
     if (!cost.containsAll(productionCost)) {
       cost = cost.addAll(productionCost);
     }
