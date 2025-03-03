@@ -257,13 +257,13 @@
   {
     "type": "Upgrade",
     "name": "Diesel generator",
-    "isPowerGenerator": true,
-    "production": {
-      "FUEL": -1
-    },
     "cost": {
       "MATERIALS": 1
     },
+    "production": {
+      "FUEL": -1
+    },
+    "isPowerGenerator": true,
     "replica": 3
   }
 ]

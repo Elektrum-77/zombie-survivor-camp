@@ -335,7 +335,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
               ? context.readTreeAsValue(root.get("production"), ResourceBank.class)
               : ResourceBank.EMPTY;
             var cost = root.has("cost")
-              ? context.readTreeAsValue(root.get("production"), ResourceBank.class)
+              ? context.readTreeAsValue(root.get("cost"), ResourceBank.class)
               : ResourceBank.EMPTY;
             var isPowerGenerator = root.get("isPowerGenerator")
               .asBoolean(false);
