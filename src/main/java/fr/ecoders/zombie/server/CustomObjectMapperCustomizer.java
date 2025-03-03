@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Action;
@@ -32,7 +33,6 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
@@ -55,55 +55,94 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         serializerProvider.defaultSerializeValue(v, jsonGenerator);
       }
     };
-  //  private static final JsonSerializer<Building> BUILDING_JSON_SERIALIZER =
-  //    new StdSerializer<>(Building.class) {
-  //      @Override
-  //      public void serializeWithType(Building value, JsonGenerator gen, SerializerProvider serializers,
-  //        TypeSerializer typeSer) throws IOException {
-  //        serialize(value, gen, serializers);
-  //      }
-  //
-  //      @Override
-  //      public void serialize(Building building, JsonGenerator generator,
-  //        SerializerProvider provider)
-  //      throws IOException {
-  //        generator.writeStartObject();
-  //        generator.writeStringField("type", "Building");
-  //        generator.writeFieldName("value");
-  //        generator.writeStartObject();
-  //        generator.writeStringField("name", building.name());
-  //        generator.writeFieldName("cost");
-  //        provider.defaultSerializeValue(building.cost(), generator);
-  //        generator.writeFieldName("production");
-  //        provider.defaultSerializeValue(building.production(), generator);
-  //        generator.writeFieldName("search");
-  //        provider.defaultSerializeValue(building.search(), generator);
-  //        generator.writeEndObject();
-  //        generator.writeEndObject();
-  //      }
-  //    };
-  //  private static final JsonSerializer<Zombie> ZOMBIE_JSON_SERIALIZER =
-  //    new StdSerializer<>(Zombie.class) {
-  //      @Override
-  //      public void serializeWithType(Zombie value, JsonGenerator gen, SerializerProvider serializers,
-  //        TypeSerializer typeSer) throws IOException {
-  //        serialize(value, gen, serializers);
-  //      }
-  //
-  //      @Override
-  //      public void serialize(Zombie event, JsonGenerator generator,
-  //        SerializerProvider provider)
-  //      throws IOException {
-  //        generator.writeStartObject();
-  //        generator.writeStringField("type", "Zombie");
-  //        generator.writeFieldName("value");
-  //        generator.writeStartObject();
-  //        generator.writeStringField("name", event.name());
-  //        generator.writeNumberField("count", event.count());
-  //        generator.writeEndObject();
-  //        generator.writeEndObject();
-  //      }
-  //    };
+  private static final JsonSerializer<Building> BUILDING_JSON_SERIALIZER =
+    new StdSerializer<>(Building.class) {
+      @Override
+      public void serializeWithType(Building value, JsonGenerator gen, SerializerProvider serializers,
+        TypeSerializer typeSer) throws IOException {
+        serialize(value, gen, serializers);
+      }
+
+      @Override
+      public void serialize(Building building, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("type", "Building");
+        generator.writeObjectFieldStart("value");
+        generator.writeStringField("name", building.name());
+        generator.writeFieldName("cost");
+        provider.defaultSerializeValue(building.cost(), generator);
+        generator.writeFieldName("production");
+        provider.defaultSerializeValue(building.production(), generator);
+        generator.writeFieldName("search");
+        provider.defaultSerializeValue(building.search(), generator);
+        generator.writeEndObject();
+        generator.writeEndObject();
+      }
+    };
+  private static final JsonSerializer<Zombie> ZOMBIE_JSON_SERIALIZER =
+    new StdSerializer<>(Zombie.class) {
+      @Override
+      public void serializeWithType(Zombie value, JsonGenerator gen, SerializerProvider serializers,
+        TypeSerializer typeSer) throws IOException {
+        serialize(value, gen, serializers);
+      }
+
+      @Override
+      public void serialize(Zombie event, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("type", "Zombie");
+        generator.writeFieldName("value");
+        generator.writeStartObject();
+        generator.writeStringField("name", event.name());
+        generator.writeNumberField("count", event.count());
+        generator.writeEndObject();
+        generator.writeEndObject();
+      }
+    };
+  private static final JsonSerializer<Upgrade> UPGRADE_JSON_SERIALIZER =
+    new StdSerializer<>(Upgrade.class) {
+      @Override
+      public void serializeWithType(Upgrade value, JsonGenerator gen, SerializerProvider serializers,
+        TypeSerializer typeSer) throws IOException {
+        serialize(value, gen, serializers);
+      }
+
+      @Override
+      public void serialize(Upgrade upgrade, JsonGenerator generator,
+        SerializerProvider provider)
+      throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("type", "Upgrade");
+        generator.writeObjectFieldStart("value");
+        generator.writeStringField("name", upgrade.name());
+        generator.writeFieldName("cost");
+        provider.defaultSerializeValue(upgrade.cost(), generator);
+        generator.writeFieldName("production");
+        provider.defaultSerializeValue(upgrade.production(), generator);
+        generator.writeBooleanField("isPowerGenerator", upgrade.isPowerGenerator());
+
+        generator.writeObjectFieldStart("filter");
+        switch (upgrade.filter()) {
+          case Upgrade.Filter.Const c when c.equals(Upgrade.Filter.NONE) -> generator.writeStringField("type", "None");
+          case Upgrade.Filter.Const c when c.equals(Upgrade.Filter.UNIQUE) ->
+            generator.writeStringField("type", "Unique");
+          case Upgrade.Filter.Const c -> throw new AssertionError("Unsupported const filter " + c);
+          case Upgrade.Filter.IsCategory(Building.Category category) -> {
+            generator.writeStringField("type", "IsCategory");
+            generator.writeFieldName("category");
+            provider.defaultSerializeValue(category, generator);
+          }
+        }
+        generator.writeEndObject();
+
+        generator.writeEndObject();
+        generator.writeEndObject();
+      }
+    };
   private static final JsonSerializer<ServerEvent.ChatMessage> CHAT_MESSAGE_JSON_SERIALIZER =
     new StdSerializer<>(ServerEvent.ChatMessage.class) {
       @Override
@@ -161,13 +200,12 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeFieldName("currentPlayer");
         provider.defaultSerializeValue(state.currentPlayer(), generator);
         var hand = state.hand();
-        var handWithAction = IntStream.range(0, hand.size())
-          .mapToObj(i -> {
-            var card = hand.get(i);
-            return Map.of("type", card.type(), "value", card, "actions", Action.handActionOf(i, state));
-          })
-          .toList();
-        generator.writePOJOField("hand", handWithAction);
+        generator.writeArrayFieldStart("hand");
+        for (int i = 0; i < hand.size(); i++) {
+          var card = hand.get(i);
+          generator.writePOJO(Map.of("card", card, "actions", Action.handActionOf(i, state)));
+        }
+        generator.writeEndArray();
         generator.writeEndObject();
       }
     };
@@ -394,8 +432,9 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
 
     module.addSerializer(Instant.class, INSTANT_JSON_SERIALIZER);
     module.addSerializer(ResourceBank.class, RESOURCE_BANK_JSON_SERIALIZER);
-    //    module.addSerializer(Building.class, BUILDING_JSON_SERIALIZER);
-    //    module.addSerializer(Zombie.class, ZOMBIE_JSON_SERIALIZER);
+    module.addSerializer(Building.class, BUILDING_JSON_SERIALIZER);
+    module.addSerializer(Zombie.class, ZOMBIE_JSON_SERIALIZER);
+    module.addSerializer(Upgrade.class, UPGRADE_JSON_SERIALIZER);
     module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
@@ -414,7 +453,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addDeserializer(GameOption.CardOption.class, CARD_OPTION_JSON_DESERIALIZER);
     module.addDeserializer(Upgrade.Filter.class, FILTER_JSON_DESERIALIZER);
 
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     mapper.registerModule(module);
     mapper.configOverride(Collection.class)
       .setSetterInfo(JsonSetter.Value.forContentNulls(Nulls.AS_EMPTY));

@@ -4,10 +4,14 @@ import DummyView from "@/game/card/DummyView.vue";
 import BuildingView from "@/game/card/BuildingView.vue";
 import { CARD_IMG } from "@/assets/cards.ts";
 import { computed } from "vue";
+import ZombieView from "@/game/card/ZombieView.vue";
+import UpgradeView from "@/game/card/UpgradeView.vue";
 
 const {card} = defineProps<{ card: Card }>()
 
 const contentViews = {
+  "Upgrade": UpgradeView,
+  "Zombie": ZombieView,
   "Building": BuildingView,
   "Dummy": DummyView,
 } as const

@@ -2,12 +2,11 @@
 import type { Card } from "@/game/card/Card.ts";
 import { computed, ref } from "vue";
 import CardView from "@/game/card/CardView.vue";
-import type { Action } from "@/game/Action.ts";
+import type { Action } from "@/game/action/Action.ts";
 import { vElementHover, vOnClickOutside } from "@vueuse/components";
-import ActionList from "@/game/ActionList.vue";
-import { ICON_ACTION } from "@/icon.ts";
+import ActionDisplay from "@/game/action/ActionDisplay.vue";
 
-defineProps<{ card: Card, actions: Action[] }>()
+const {actions} = defineProps<{ card: Card, actions: Action[] }>()
 defineEmits<{action: [Action]}>()
 const hovered = ref(false)
 const clicked = ref(false)
@@ -18,9 +17,9 @@ const focused = computed(() => hovered.value || clicked.value)
   <div class="card-container" v-element-hover="v=>hovered=v">
     <div>
       <Transition name="fade">
-        <ActionList
+        <ActionDisplay
           v-if="focused"
-          :actions="actions.map(value=>({value, icon: ICON_ACTION[value.type]}))"
+          :actions
           @selected="$emit('action', $event)"
         />
       </Transition>

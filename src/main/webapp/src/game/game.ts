@@ -1,12 +1,12 @@
 import type { Message } from "@/Chat.vue";
-import type { Card } from "@/game/card/Card.ts";
+import type { BuildingCard, Card, UpgradeCard } from "@/game/card/Card.ts";
 import type { ResourceBank } from "@/game/ResourceBank.ts";
-import type { Action } from "@/game/Action.ts";
+import type { Action } from "@/game/action/Action.ts";
 import { ref, shallowRef } from "vue";
 import { now } from "@vueuse/core";
 
 export type GameState = {
-  hand: { card: Card, actions: [Action] }[]
+  hand: { card: Card, actions: Action[] }[]
   camps: Record<string, Camp>
   currentPlayer: string
 }
@@ -18,8 +18,8 @@ export type Camp = {
   isSpaceAvailable: boolean
   searchCost: ResourceBank
   production: ResourceBank
-  buildings: readonly Card[]
-  searches: readonly Card[]
+  buildings: readonly { building: BuildingCard, upgrades: UpgradeCard[] }[]
+  searches: readonly BuildingCard[]
 }
 
 export type LobbyEvent = { type: "LobbyEvent"; value: LobbyEventValue }

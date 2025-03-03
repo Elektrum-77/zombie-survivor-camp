@@ -2,7 +2,7 @@
 import type { GameState } from "@/game/game.ts";
 import CampSelector from "@/game/camp/CampSelector.vue";
 import CampView from "@/game/camp/CampView.vue";
-import type {Action} from "@/game/Action.ts";
+import type {Action} from "@/game/action/Action.ts";
 import HandView from "@/game/HandView.vue";
 import {ref, shallowRef} from "vue";
 import {onKeyStroke} from "@vueuse/core";

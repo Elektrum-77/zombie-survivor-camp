@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Camp } from "@/game/game.ts";
 import ResourceBankView from "@/game/ResourceBankView.vue";
-import type { Action } from "@/game/Action.ts";
+import type { Action } from "@/game/action/Action.ts";
 import CardViewAction from "@/game/card/CardViewAction.vue";
 
 defineProps<Camp>()
@@ -22,8 +22,8 @@ defineEmits<{ action: Action[] }>()
       <div class="row">
         <CardViewAction
           v-for="(card, index) in buildings"
-          :card
-          :actions="[{type: 'DestroyBuilding', value: {index}}]"
+          :card="card.building"
+          :actions="[{type: 'DestroyBuilding', value: { index }}]"
           @action="$emit('action', $event)"
         />
       </div>
