@@ -249,6 +249,9 @@
     "type": "Zombie",
     "name": "Wandering zombies",
     "count": 5,
+    "bonusProduction": {
+      "FOOD": 1
+    },
     "replica": 6
   },
   {

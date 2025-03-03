@@ -1,16 +1,10 @@
 package fr.ecoders.zombie.card;
 
-import fr.ecoders.zombie.state.ResourceBank;
-
-public sealed interface Card permits Building, Card.Searchable, Card.Zombie, Upgrade {
+public sealed interface Card permits Building, Zombie, Upgrade {
   String name();
 
-  sealed interface Searchable extends Card permits Building {
-    ResourceBank search();
+  default String type() {
+    return this.getClass()
+      .getSimpleName();
   }
-
-  sealed interface Zombie extends Card permits ZombieEvent {
-    int count();
-  }
-
 }

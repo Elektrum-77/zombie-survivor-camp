@@ -21,9 +21,12 @@ public final class PlayerTurn {
     this.actions = actions;
   }
 
-  public static Builder builder(GameState state, String currentPlayer) {
+  public static Builder builder(List<String> playerOrder, GameState state, String currentPlayer) {
+    playerOrder = List.copyOf(playerOrder);
     Objects.requireNonNull(state);
-    return new Builder(currentPlayer, state);
+    Objects.requireNonNull(currentPlayer);
+    state.player(currentPlayer); // implicit check
+    return new Builder(playerOrder, currentPlayer, state);
   }
 
   public GameState play(GameState state, String currentPlayer) {
@@ -35,12 +38,14 @@ public final class PlayerTurn {
   }
 
   public static final class Builder {
+    private final List<String> playerOrder;
     private final ArrayList<Action> actions = new ArrayList<>();
     private final String currentPlayer;
     private boolean isDone = false;
     private GameState state;
 
-    private Builder(String currentPlayer, GameState state) {
+    private Builder(List<String> playerOrder, String currentPlayer, GameState state) {
+      this.playerOrder = playerOrder;
       this.currentPlayer = currentPlayer;
       this.state = state;
     }
@@ -51,7 +56,7 @@ public final class PlayerTurn {
         .stream()
         .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> e.getValue().camp()));
       var player = state.player(currentPlayer);
-      return new LocalGameState(camps, player.hand(), List.of(), currentPlayer);
+      return new LocalGameState(playerOrder, camps, player.hand(), List.of(), currentPlayer);
     }
 
     public Builder add(Action action) {

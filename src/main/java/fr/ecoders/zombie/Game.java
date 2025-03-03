@@ -46,6 +46,7 @@ public final class Game {
   }
 
   private void play() {
+    state = state.startUp();
     for (int phase = 0; phase < option.phaseCount() && hasEnoughPlayer(); phase++) {
       playPhase(phase);
     }
@@ -59,7 +60,6 @@ public final class Game {
     System.out.println("Starting round " + (round + 1) + " of " + option.phaseTurnCount());
     var lock = new Object();
     var turns = new HashMap<String, PlayerTurn>();
-    state = state.withDrawnPlayersCards();
 
     synchronized (lock) {
       // ask players what to do
@@ -70,7 +70,7 @@ public final class Game {
             .name("Turn handler of " + player)
             .start(() -> {
               try {
-                var turn = handler.buildTurn(PlayerTurn.builder(state, player));
+                var turn = handler.buildTurn(PlayerTurn.builder(playerOrder, state, player));
                 synchronized (lock) {
                   turns.put(player, turn);
                   lock.notifyAll();
@@ -109,6 +109,7 @@ public final class Game {
       }
     }
 
+    state = state.cleanUp();
   }
 
   private void playPhase(int phase) {

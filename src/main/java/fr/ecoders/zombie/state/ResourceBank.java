@@ -12,8 +12,15 @@ import static java.util.stream.Collectors.summingInt;
 import java.util.stream.Stream;
 
 public record ResourceBank(Map<Resource, Integer> resources) {
+  public static final ResourceBank EMPTY = new ResourceBank(Map.of());
+
   public ResourceBank {
     resources = validateResources(resources);
+  }
+
+  public int resource(Resource resource) {
+    Objects.requireNonNull(resource);
+    return resources.getOrDefault(resource, 0);
   }
 
   private static Map<Resource, Integer> validateResources(Map<Resource, Integer> resources) {
@@ -56,6 +63,10 @@ public record ResourceBank(Map<Resource, Integer> resources) {
     return new ResourceBank(resources);
   }
 
+  public ResourceBank negate() {
+    return multiply(-1);
+  }
+
   public boolean contains(Resource resource, int amount) {
     Objects.requireNonNull(resource);
     return resources.getOrDefault(resource, 0) >= amount;
@@ -90,11 +101,11 @@ public record ResourceBank(Map<Resource, Integer> resources) {
 
   public ResourceBank subtractAll(ResourceBank other) {
     Objects.requireNonNull(other);
-    return addAll(other.multiply(-1));
+    return addAll(other.negate());
   }
 
   public ResourceBank cost() {
-    return filterNegative().multiply(-1);
+    return filterNegative().negate();
   }
 
   public ResourceBank filter(BiPredicate<Resource, Integer> predicate) {

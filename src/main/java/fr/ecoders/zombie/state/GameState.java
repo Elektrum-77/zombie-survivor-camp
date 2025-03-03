@@ -2,12 +2,14 @@ package fr.ecoders.zombie.state;
 
 import fr.ecoders.zombie.GameOption;
 import fr.ecoders.zombie.card.Card;
+import static fr.ecoders.zombie.state.ResourceBank.EMPTY;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public record GameState(
   GameOption option,
@@ -62,16 +64,37 @@ public record GameState(
     return new GameState(option, players, cards, discards);
   }
 
-  public GameState withDrawnPlayersCards() {
+  public GameState startUp() {
+    var players = new HashMap<>(this.players);
+    var cards = new ArrayList<>(this.cards);
+    players.replaceAll((_, player) -> {
+      var hand = new ArrayList<>(player.hand());
+      IntStream.range(0, option.baseDrawCount())
+        .mapToObj(_ -> cards.removeLast())
+        .forEach(hand::add);
+      return player.withHand(hand);
+    });
+    return new GameState(option, players, cards, discards);
+  }
+
+  public GameState cleanUp() {
     var players = new HashMap<>(this.players);
     var cards = new ArrayList<>(this.cards);
     var discards = new ArrayList<>(this.discards);
 
     players.replaceAll((_, player) -> {
       var hand = new ArrayList<>(player.hand());
+      var camp = player.camp();
+
+      // draw card
       var amount = Math.max(option.baseDrawCount() - hand.size(), 0);
       hand.addAll(draw(cards, discards, amount));
-      return player.withHand(hand);
+
+      // reset bonus production
+      camp = camp.withBonusProduction(EMPTY);
+
+      return player.withHand(hand)
+        .withCamp(camp);
     });
     return new GameState(option, players, cards, discards);
   }

@@ -1,5 +1,6 @@
 package fr.ecoders.zombie.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -12,7 +13,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import fr.ecoders.zombie.Action;
@@ -21,7 +21,7 @@ import fr.ecoders.zombie.Resource;
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
 import fr.ecoders.zombie.card.Upgrade;
-import fr.ecoders.zombie.card.ZombieEvent;
+import fr.ecoders.zombie.card.Zombie;
 import fr.ecoders.zombie.state.Camp;
 import fr.ecoders.zombie.state.LocalGameState;
 import fr.ecoders.zombie.state.ResourceBank;
@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
@@ -53,55 +55,55 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         serializerProvider.defaultSerializeValue(v, jsonGenerator);
       }
     };
-  private static final JsonSerializer<Building> BUILDING_JSON_SERIALIZER =
-    new StdSerializer<>(Building.class) {
-      @Override
-      public void serializeWithType(Building value, JsonGenerator gen, SerializerProvider serializers,
-        TypeSerializer typeSer) throws IOException {
-        serialize(value, gen, serializers);
-      }
-
-      @Override
-      public void serialize(Building building, JsonGenerator generator,
-        SerializerProvider provider)
-      throws IOException {
-        generator.writeStartObject();
-        generator.writeStringField("type", "Building");
-        generator.writeFieldName("value");
-        generator.writeStartObject();
-        generator.writeStringField("name", building.name());
-        generator.writeFieldName("cost");
-        provider.defaultSerializeValue(building.cost(), generator);
-        generator.writeFieldName("production");
-        provider.defaultSerializeValue(building.production(), generator);
-        generator.writeFieldName("search");
-        provider.defaultSerializeValue(building.search(), generator);
-        generator.writeEndObject();
-        generator.writeEndObject();
-      }
-    };
-  private static final JsonSerializer<ZombieEvent> ZOMBIE_EVENT_JSON_SERIALIZER =
-    new StdSerializer<>(ZombieEvent.class) {
-      @Override
-      public void serializeWithType(ZombieEvent value, JsonGenerator gen, SerializerProvider serializers,
-        TypeSerializer typeSer) throws IOException {
-        serialize(value, gen, serializers);
-      }
-
-      @Override
-      public void serialize(ZombieEvent event, JsonGenerator generator,
-        SerializerProvider provider)
-      throws IOException {
-        generator.writeStartObject();
-        generator.writeStringField("type", "Zombie");
-        generator.writeFieldName("value");
-        generator.writeStartObject();
-        generator.writeStringField("name", event.name());
-        generator.writeNumberField("count", event.count());
-        generator.writeEndObject();
-        generator.writeEndObject();
-      }
-    };
+  //  private static final JsonSerializer<Building> BUILDING_JSON_SERIALIZER =
+  //    new StdSerializer<>(Building.class) {
+  //      @Override
+  //      public void serializeWithType(Building value, JsonGenerator gen, SerializerProvider serializers,
+  //        TypeSerializer typeSer) throws IOException {
+  //        serialize(value, gen, serializers);
+  //      }
+  //
+  //      @Override
+  //      public void serialize(Building building, JsonGenerator generator,
+  //        SerializerProvider provider)
+  //      throws IOException {
+  //        generator.writeStartObject();
+  //        generator.writeStringField("type", "Building");
+  //        generator.writeFieldName("value");
+  //        generator.writeStartObject();
+  //        generator.writeStringField("name", building.name());
+  //        generator.writeFieldName("cost");
+  //        provider.defaultSerializeValue(building.cost(), generator);
+  //        generator.writeFieldName("production");
+  //        provider.defaultSerializeValue(building.production(), generator);
+  //        generator.writeFieldName("search");
+  //        provider.defaultSerializeValue(building.search(), generator);
+  //        generator.writeEndObject();
+  //        generator.writeEndObject();
+  //      }
+  //    };
+  //  private static final JsonSerializer<Zombie> ZOMBIE_JSON_SERIALIZER =
+  //    new StdSerializer<>(Zombie.class) {
+  //      @Override
+  //      public void serializeWithType(Zombie value, JsonGenerator gen, SerializerProvider serializers,
+  //        TypeSerializer typeSer) throws IOException {
+  //        serialize(value, gen, serializers);
+  //      }
+  //
+  //      @Override
+  //      public void serialize(Zombie event, JsonGenerator generator,
+  //        SerializerProvider provider)
+  //      throws IOException {
+  //        generator.writeStartObject();
+  //        generator.writeStringField("type", "Zombie");
+  //        generator.writeFieldName("value");
+  //        generator.writeStartObject();
+  //        generator.writeStringField("name", event.name());
+  //        generator.writeNumberField("count", event.count());
+  //        generator.writeEndObject();
+  //        generator.writeEndObject();
+  //      }
+  //    };
   private static final JsonSerializer<ServerEvent.ChatMessage> CHAT_MESSAGE_JSON_SERIALIZER =
     new StdSerializer<>(ServerEvent.ChatMessage.class) {
       @Override
@@ -158,8 +160,14 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         provider.defaultSerializeValue(state.camps(), generator);
         generator.writeFieldName("currentPlayer");
         provider.defaultSerializeValue(state.currentPlayer(), generator);
-        generator.writeFieldName("hand");
-        provider.defaultSerializeValue(CardWithAction.handWithAction(state), generator);
+        var hand = state.hand();
+        var handWithAction = IntStream.range(0, hand.size())
+          .mapToObj(i -> {
+            var card = hand.get(i);
+            return Map.of("type", card.type(), "value", card, "actions", Action.handActionOf(i, state));
+          })
+          .toList();
+        generator.writePOJOField("hand", handWithAction);
         generator.writeEndObject();
       }
     };
@@ -239,7 +247,14 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
           case Action.Construct(int index) -> generator.writeNumberField("index", index);
           case Action.DestroyBuilding(int index) -> generator.writeNumberField("index", index);
           case Action.Search(int index) -> generator.writeNumberField("index", index);
-          case Action.SendZombie _, Action.UpgradeBuilding _ -> throw new AssertionError("WTF");
+          case Action.SendZombie(String username, int index) -> {
+            generator.writeNumberField("index", index);
+            generator.writeStringField("username", username);
+          }
+          case Action.UpgradeBuilding(int index, int building) -> {
+            generator.writeNumberField("index", index);
+            generator.writeNumberField("buildingIndex", building);
+          }
         }
         generator.writeEndObject();
         generator.writeEndObject();
@@ -308,12 +323,27 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       throws IOException {
         var codec = jsonParser.getCodec();
         var root = (JsonNode) codec.readTree(jsonParser);
-        var typeNode = root.get("type");
-        var type = typeNode.asText();
+        var type = root.get("type")
+          .asText();
         return switch (type) {
           case "Building" -> context.readTreeAsValue(root, Building.class);
-          case "Zombie" -> context.readTreeAsValue(root, ZombieEvent.class);
-          case "Upgrade" -> context.readTreeAsValue(root, Upgrade.class);
+          case "Zombie" -> context.readTreeAsValue(root, Zombie.class);
+          case "Upgrade" -> {
+            var name = root.get("name")
+              .asText();
+            var production = root.has("production")
+              ? context.readTreeAsValue(root.get("production"), ResourceBank.class)
+              : ResourceBank.EMPTY;
+            var cost = root.has("cost")
+              ? context.readTreeAsValue(root.get("production"), ResourceBank.class)
+              : ResourceBank.EMPTY;
+            var isPowerGenerator = root.get("isPowerGenerator")
+              .asBoolean(false);
+            var filter = root.has("filter") ? root.get("filter")
+              .traverse(codec)
+              .readValueAs(Upgrade.Filter.class) : Upgrade.Filter.NONE;
+            yield new Upgrade(name, cost, production, isPowerGenerator, filter);
+          }
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
       }
@@ -332,6 +362,26 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         }
       }
     };
+  private static final JsonDeserializer<Upgrade.Filter> FILTER_JSON_DESERIALIZER =
+    new StdDeserializer<>(Upgrade.Filter.class) {
+      @Override
+      public Upgrade.Filter deserialize(JsonParser jsonParser, DeserializationContext context)
+      throws IOException {
+        var codec = jsonParser.getCodec();
+        var root = (JsonNode) codec.readTree(jsonParser);
+        var type = root.get("type")
+          .asText();
+        return switch (type) {
+          case "IsCategory" -> new Upgrade.Filter.IsCategory(root.get("category")
+            .traverse(codec)
+            .readValueAs(Building.Category.class));
+          case "Unique" -> Upgrade.Filter.UNIQUE;
+          case "None" -> Upgrade.Filter.NONE;
+          default -> throw new IllegalArgumentException("Unknown filter type " + type);
+        };
+      }
+    };
+
 
   @Override
   public int priority() {
@@ -344,8 +394,8 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
 
     module.addSerializer(Instant.class, INSTANT_JSON_SERIALIZER);
     module.addSerializer(ResourceBank.class, RESOURCE_BANK_JSON_SERIALIZER);
-    module.addSerializer(Building.class, BUILDING_JSON_SERIALIZER);
-    module.addSerializer(ZombieEvent.class, ZOMBIE_EVENT_JSON_SERIALIZER);
+    //    module.addSerializer(Building.class, BUILDING_JSON_SERIALIZER);
+    //    module.addSerializer(Zombie.class, ZOMBIE_JSON_SERIALIZER);
     module.addSerializer(Camp.class, CAMP_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.ChatMessage.class, CHAT_MESSAGE_JSON_SERIALIZER);
     module.addSerializer(ServerEvent.LobbyEvent.class, LOBBY_EVENT_JSON_SERIALIZER);
@@ -362,7 +412,9 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addDeserializer(Card.class, CARD_JSON_DESERIALIZER);
     module.addDeserializer(ResourceBank.class, RESOURCE_BANK_JSON_DESERIALIZER);
     module.addDeserializer(GameOption.CardOption.class, CARD_OPTION_JSON_DESERIALIZER);
+    module.addDeserializer(Upgrade.Filter.class, FILTER_JSON_DESERIALIZER);
 
+    mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     mapper.registerModule(module);
     mapper.configOverride(Collection.class)
       .setSetterInfo(JsonSetter.Value.forContentNulls(Nulls.AS_EMPTY));

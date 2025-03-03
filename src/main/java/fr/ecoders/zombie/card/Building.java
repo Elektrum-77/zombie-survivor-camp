@@ -11,7 +11,7 @@ public record Building(
   Optional<ResourceBank> electrified,
   Optional<Category> category,
   ResourceBank search
-) implements Card.Searchable, Card {
+) implements Card {
   public Building {
     Objects.requireNonNull(name);
     Objects.requireNonNull(cost);

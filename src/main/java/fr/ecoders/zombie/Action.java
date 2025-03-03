@@ -2,12 +2,17 @@ package fr.ecoders.zombie;
 
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.card.Upgrade;
+import fr.ecoders.zombie.card.Zombie;
 import fr.ecoders.zombie.state.GameState;
+import fr.ecoders.zombie.state.LocalGameState;
 import fr.ecoders.zombie.state.ResourceBank;
 import fr.ecoders.zombie.state.UpgradableBuilding;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import static java.util.function.Predicate.not;
+import java.util.stream.IntStream;
 
 public sealed interface Action {
 
@@ -29,9 +34,9 @@ public sealed interface Action {
     return hand.remove(index);
   }
 
-  static private Card.Zombie handZombie(ArrayList<Card> hand, int index) {
+  static private Zombie handZombie(ArrayList<Card> hand, int index) {
     var card = handCard(hand, index);
-    if (!(card instanceof Card.Zombie zombie)) {
+    if (!(card instanceof Zombie zombie)) {
       throw new IllegalArgumentException("Card " + card + " is not a zombie");
     }
     return zombie;
@@ -45,14 +50,6 @@ public sealed interface Action {
     return buildable;
   }
 
-  static private Card.Searchable handSearchable(ArrayList<Card> hand, int index) {
-    var card = handCard(hand, index);
-    if (!(card instanceof Card.Searchable searchable)) {
-      throw new IllegalArgumentException("Card " + card + " is not searchable");
-    }
-    return searchable;
-  }
-
   static private fr.ecoders.zombie.card.Upgrade handUpgrade(ArrayList<Card> hand, int index) {
     var card = handCard(hand, index);
     if (!(card instanceof fr.ecoders.zombie.card.Upgrade upgrade)) {
@@ -63,9 +60,49 @@ public sealed interface Action {
 
   GameState play(GameState state, String currentUsername);
 
+  static List<Action> handActionOf(int cardIndex, LocalGameState state) {
+    var currentUsername = state.currentPlayer();
+    var hand = state.hand();
+    Objects.checkIndex(cardIndex, hand.size());
+    var card = hand.get(cardIndex);
+    var camp = state.camp();
+    var buildings = camp.buildings();
+    var production = camp.production();
+    var military = production.resource(Resource.MILITARY);
+    var actions = new ArrayList<Action>();
+    switch (card) {
+      case Building building -> {
+        if (production.containsAll(camp.searchCost())) {
+          actions.add(new Search(cardIndex));
+        }
+        if (camp.isSpaceAvailable() && production.containsAll(building.cost())) {
+          actions.add(new Construct(cardIndex));
+        }
+      }
+      case Zombie _ -> {
+        actions.addAll(state.playerOrder()
+          .stream()
+          .filter(not(currentUsername::equals))
+          .map(username -> new SendZombie(username, cardIndex))
+          .toList());
+      }
+      case Upgrade upgrade -> {
+        if (production.containsAll(upgrade.cost())) {
+          actions.addAll(IntStream.range(0, buildings.size())
+            .filter(i -> upgrade.isUpgradable(buildings.get(i)))
+            .mapToObj(i -> new UpgradeBuilding(cardIndex, i))
+            .toList());
+        }
+      }
+    }
+    return List.copyOf(actions);
+  }
+
   record UpgradeBuilding(
     int upgradeIndex,
-    int buildingIndex) implements Action {
+    int buildingIndex
+  ) implements Action {
+
     @Override
     public GameState play(GameState state, String currentUsername) {
       var player = state.player(currentUsername);
@@ -150,7 +187,7 @@ public sealed interface Action {
       var player = state.player(currentUsername);
       var camp = player.camp();
       var hand = new ArrayList<>(player.hand());
-      var search = handSearchable(hand, index);
+      var search = handBuilding(hand, index);
       validateNotMissing(camp.production(), camp.searchCost());
       camp = camp.withSearches(listAdd(camp.searches(), search));
       player = player.withHand(hand)
