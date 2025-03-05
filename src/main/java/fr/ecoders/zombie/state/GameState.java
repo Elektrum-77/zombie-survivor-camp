@@ -64,6 +64,14 @@ public record GameState(
     return new GameState(option, players, cards, discards);
   }
 
+  public GameState withCards(List<Card> cards) {
+    return new GameState(option, players, cards, discards);
+  }
+
+  public GameState withDiscards(List<Card> discards) {
+    return new GameState(option, players, cards, discards);
+  }
+
   public GameState startUp() {
     var players = new HashMap<>(this.players);
     var cards = new ArrayList<>(this.cards);

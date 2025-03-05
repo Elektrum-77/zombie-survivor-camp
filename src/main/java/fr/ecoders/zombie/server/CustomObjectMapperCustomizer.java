@@ -33,6 +33,8 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 @Singleton
 public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
@@ -289,10 +291,11 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
             generator.writeNumberField("index", index);
             generator.writeStringField("username", username);
           }
-          case Action.UpgradeBuilding(int index, int building) -> {
-            generator.writeNumberField("index", index);
-            generator.writeNumberField("buildingIndex", building);
+          case Action.UpgradeBuilding u -> {
+            generator.writeNumberField("upgradeIndex", u.upgradeIndex());
+            generator.writeNumberField("buildingIndex", u.buildingIndex());
           }
+          case Action.DrawCard _ -> throw new AssertionError("Not implemented");
         }
         generator.writeEndObject();
         generator.writeEndObject();
@@ -333,17 +336,18 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       throws IOException {
         var codec = jsonParser.getCodec();
         var root = (JsonNode) codec.readTree(jsonParser);
-        var typeNode = root.get("type");
-        var type = typeNode.asText();
-        var clazz = switch (type) {
-          case "DestroyBuilding" -> Action.DestroyBuilding.class;
-          case "CancelSearch" -> Action.CancelSearch.class;
-          case "Construct" -> Action.Construct.class;
-          case "Search" -> Action.Search.class;
-          default -> throw new IllegalArgumentException("Unknown type: " + type);
-        };
-        var valueNode = root.get("value");
-        return context.readTreeAsValue(valueNode, clazz);
+        var type = getAs(root.get("type"), JsonNode::asText).orElseThrow(
+          () -> new IllegalArgumentException("Missing type in " + root.toPrettyString()));
+        return (switch (type) {
+          case "DrawCard" -> Optional.of(Action.DRAW_CARD);
+          case "UpgradeBuilding" -> readTreeAs(root.get("value"), context, Action.UpgradeBuilding.class);
+          case "SendZombie" -> readTreeAs(root.get("value"), context, Action.SendZombie.class);
+          case "Construct" -> readTreeAs(root.get("value"), context, Action.Construct.class);
+          case "Search" -> readTreeAs(root.get("value"), context, Action.Search.class);
+          case "DestroyBuilding" -> readTreeAs(root.get("value"), context, Action.DestroyBuilding.class);
+          case "CancelSearch" -> readTreeAs(root.get("value"), context, Action.CancelSearch.class);
+          default -> throw new IllegalArgumentException("Unknown Action type " + type);
+        }).orElseThrow(() -> new IllegalArgumentException("Missing value in " + root.toPrettyString()));
       }
     };
   private static final JsonDeserializer<ResourceBank> RESOURCE_BANK_JSON_DESERIALIZER =
@@ -361,25 +365,18 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       throws IOException {
         var codec = jsonParser.getCodec();
         var root = (JsonNode) codec.readTree(jsonParser);
-        var type = root.get("type")
-          .asText();
+        var type = getAs(root.get("type"), JsonNode::asText).orElseThrow(
+          () -> new IllegalArgumentException("Missing type in " + root.toPrettyString()));
         return switch (type) {
           case "Building" -> context.readTreeAsValue(root, Building.class);
           case "Zombie" -> context.readTreeAsValue(root, Zombie.class);
           case "Upgrade" -> {
-            var name = root.get("name")
-              .asText();
-            var production = root.has("production")
-              ? context.readTreeAsValue(root.get("production"), ResourceBank.class)
-              : ResourceBank.EMPTY;
-            var cost = root.has("cost")
-              ? context.readTreeAsValue(root.get("cost"), ResourceBank.class)
-              : ResourceBank.EMPTY;
-            var isPowerGenerator = root.get("isPowerGenerator")
-              .asBoolean(false);
-            var filter = root.has("filter") ? root.get("filter")
-              .traverse(codec)
-              .readValueAs(Upgrade.Filter.class) : Upgrade.Filter.NONE;
+            var name = getAs(root.get("name"), JsonNode::asText).orElseThrow(
+              () -> new IllegalArgumentException("Missing name in " + root.toPrettyString()));
+            var production = readTreeAs(root.get("production"), context, ResourceBank.class).orElse(ResourceBank.EMPTY);
+            var cost = readTreeAs(root.get("cost"), context, ResourceBank.class).orElse(ResourceBank.EMPTY);
+            var isPowerGenerator = getAs(root.get("isPowerGenerator"), JsonNode::asBoolean).orElse(false);
+            var filter = readTreeAs(root.get("filter"), context, Upgrade.Filter.class).orElse(Upgrade.Filter.NONE);
             yield new Upgrade(name, cost, production, isPowerGenerator, filter);
           }
           default -> throw new IllegalArgumentException("Unknown type: " + type);
@@ -393,11 +390,9 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       throws IOException {
         var codec = jsonParser.getCodec();
         var root = (JsonNode) codec.readTree(jsonParser);
-        var typeNode = root.get("replica");
-        var replica = typeNode.asInt();
-        try (var p = root.traverse(codec)) {
-          return new GameOption.CardOption(p.readValueAs(Card.class), replica);
-        }
+        var replica = getAs(root.get("replica"), JsonNode::asInt).orElse(1);
+        var card = readTreeAs(root, context, Card.class).orElseThrow();
+        return new GameOption.CardOption(card, replica);
       }
     };
   private static final JsonDeserializer<Upgrade.Filter> FILTER_JSON_DESERIALIZER =
@@ -410,9 +405,8 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         var type = root.get("type")
           .asText();
         return switch (type) {
-          case "IsCategory" -> new Upgrade.Filter.IsCategory(root.get("category")
-            .traverse(codec)
-            .readValueAs(Building.Category.class));
+          case "IsCategory" ->
+            new Upgrade.Filter.IsCategory(context.readTreeAsValue(root.get("category"), Building.Category.class));
           case "Unique" -> Upgrade.Filter.UNIQUE;
           case "None" -> Upgrade.Filter.NONE;
           default -> throw new IllegalArgumentException("Unknown filter type " + type);
@@ -420,6 +414,15 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
       }
     };
 
+  private static <V> Optional<V> getAs(JsonNode node, Function<? super JsonNode, ? extends V> mapper) {
+    return Optional.ofNullable(node)
+      .map(mapper);
+  }
+
+  private static <V> Optional<V> readTreeAs(JsonNode node, DeserializationContext context, Class<V> type)
+  throws IOException {
+    return node == null ? Optional.empty() : Optional.of(context.readTreeAsValue(node, type));
+  }
 
   @Override
   public int priority() {

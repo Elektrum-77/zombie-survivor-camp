@@ -5,6 +5,7 @@ import ammunition_workbench from "@/assets/cards/ammunition_workbench.webp"
 import hunter_tent from "@/assets/cards/hunter_tent.webp"
 import medical_tent from "@/assets/cards/medical_tent.webp"
 import training_yard from "@/assets/cards/training_yard.webp"
+import logging_yard from "@/assets/cards/logging_yard.webp"
 import watch_tower from "@/assets/cards/watch_tower.webp"
 import well from "@/assets/cards/well.webp"
 import infested_gas_station from "@/assets/cards/infested_gas_station.webp"
@@ -19,6 +20,7 @@ export const CARD_IMG = {
   ammunition_workbench,
   hunter_tent,
   training_yard,
+  logging_yard,
   well,
   medical_tent,
   watch_tower,

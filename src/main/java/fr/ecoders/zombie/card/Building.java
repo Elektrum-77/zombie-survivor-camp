@@ -1,5 +1,6 @@
 package fr.ecoders.zombie.card;
 
+import static fr.ecoders.zombie.card.Card.validateName;
 import fr.ecoders.zombie.state.ResourceBank;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,13 +14,10 @@ public record Building(
   ResourceBank search
 ) implements Card {
   public Building {
-    Objects.requireNonNull(name);
+    name = validateName(name);
     Objects.requireNonNull(cost);
     Objects.requireNonNull(production);
     Objects.requireNonNull(search);
-    if (name.isBlank()) {
-      throw new IllegalArgumentException("name cannot be blank");
-    }
     var productionCost = production.cost();
     if (!cost.containsAll(productionCost)) {
       cost = cost.addAll(productionCost);

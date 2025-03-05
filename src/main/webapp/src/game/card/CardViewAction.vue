@@ -14,7 +14,12 @@ const focused = computed(() => hovered.value || clicked.value)
 </script>
 
 <template>
-  <div class="card-container" v-element-hover="v=>hovered=v">
+  <div
+    class="card-container"
+    v-element-hover="v=>hovered=v"
+    v-on-click-outside="()=>clicked=false"
+    @click="clicked=true"
+  >
     <div>
       <Transition name="fade">
         <ActionDisplay
@@ -25,11 +30,9 @@ const focused = computed(() => hovered.value || clicked.value)
       </Transition>
     </div>
     <CardView
-      v-on-click-outside="()=>clicked=false"
       :card
       :focused
       class="card"
-      @click="clicked=true"
     />
   </div>
 </template>

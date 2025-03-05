@@ -6,6 +6,7 @@ import static fr.ecoders.zombie.server.WebSocketServer.ACTION_QUEUE_KEY;
 import static fr.ecoders.zombie.server.WebSocketServer.ACTION_THREAD_KEY;
 import io.quarkus.websockets.next.WebSocketConnection;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.SynchronousQueue;
 
 public class WebSocketPlayerHandler implements PlayerHandler {
@@ -50,5 +51,13 @@ public class WebSocketPlayerHandler implements PlayerHandler {
     } finally {
       userData.remove(ACTION_THREAD_KEY);
     }
+  }
+
+  @Override
+  public void kick() {
+    var userdata = connection.userData();
+    var threadOpt = Optional.ofNullable(userdata.get(ACTION_THREAD_KEY));
+    threadOpt.ifPresent(Thread::interrupt);
+    connection.closeAndAwait();
   }
 }

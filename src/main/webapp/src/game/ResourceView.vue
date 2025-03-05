@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ICON_RESOURCES } from "@/icon.ts";
+import { ICON_RESOURCES } from "@/assets/icon.ts";
 import { Icon } from "@iconify/vue";
 import type { Resource } from "@/game/ResourceBank.ts";
 

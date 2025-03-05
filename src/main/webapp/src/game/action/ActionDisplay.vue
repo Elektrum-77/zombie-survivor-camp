@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, shallowRef } from "vue";
 import type { Action, ActionType } from "@/game/action/Action.ts";
-import { ICON_ACTION } from "@/icon.ts";
+import { ICON_ACTION } from "@/assets/icon.ts";
 import { Icon } from "@iconify/vue";
-import ActionMultipleChoiceModal from "@/game/action/ActionMultipleChoiceModal.vue";
-import { useVfm } from 'vue-final-modal'
+import Modal from "@/Modal.vue";
 
-const vfm = useVfm()
 const {actions} = defineProps<{ actions: Action[] }>()
-const emit = defineEmits<{ selected: [Action] }>()
+defineEmits<{ selected: [Action] }>()
 const actionByType = computed(() => {
   const result = {} as Record<ActionType, Action[]>
   actions.forEach(action => {
@@ -18,50 +16,57 @@ const actionByType = computed(() => {
   return result
 })
 
-const modalId = "actionModal"
-const multipleChoiceActions = ref<Action[]>([])
-
-function openMultipleChoiceModal(actions: Action[]) {
-  multipleChoiceActions.value = actions
-  vfm.open(modalId)
-}
-
-function select(action: Action) {
-  emit("selected", action)
-  vfm.close(modalId)
-}
+const multipleChoiceActions = shallowRef<Action[]>([])
 </script>
 
 <template>
-  <div class="row">
+  <div class="row action-types">
     <Icon
       v-for="(list, type) in actionByType"
       :icon="ICON_ACTION[type]"
       :color="type === 'DestroyBuilding' || type === 'CancelSearch' ? 'red' : undefined"
-      @click="() => list.length > 1 ? openMultipleChoiceModal(list) : $emit('selected', list[0])"
+      @click="() => list.length > 1 ? multipleChoiceActions = list : $emit('selected', list[0])"
       width="2rem"
       height="2rem"
     />
-    <ActionMultipleChoiceModal
-      :modalId
-      :actions="multipleChoiceActions"
-      @selected="select($event)"
-    />
+    <Modal :show="multipleChoiceActions.length > 1">
+      <ul class="action-list">
+        <li
+          v-for="(action, i) in multipleChoiceActions" :key="i"
+          v-text="JSON.stringify(action)"
+          @click="() => {
+            $emit('selected', action)
+            multipleChoiceActions = []
+          }"
+        />
+      </ul>
+    </Modal>
   </div>
 </template>
 
 <style scoped>
-div {
+.action-types {
   align-items: stretch;
   justify-content: center;
 }
 
-div > * {
+.action-types > * {
   cursor: pointer;
   transition: all 0.25s;
 }
 
-div > *:hover {
+.action-types > *:hover {
   transform: translateY(-0.5rem);
+}
+
+.action-list {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  list-style: none;
+}
+
+.action-list > li:hover {
+  transform: translateX(0.5rem) scale(1.05);
 }
 </style>

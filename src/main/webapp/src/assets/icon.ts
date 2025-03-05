@@ -9,6 +9,8 @@ export const ICON_ACTION: Record<ActionType, string> = {
   Search: ICON_ACTION_SEARCH,
   CancelSearch: "mdi:trash",
   DestroyBuilding: "mdi:trash",
+  SendZombie: "mdi:upload",
+  UpgradeBuilding: ICON_ACTION_CONSTRUCT,
 }
 
 export const ICON_RESOURCES: Record<Resource, string> = {

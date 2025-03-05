@@ -9,6 +9,7 @@ import fr.ecoders.zombie.state.LocalGameState;
 import fr.ecoders.zombie.state.ResourceBank;
 import fr.ecoders.zombie.state.UpgradableBuilding;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import static java.util.function.Predicate.not;
@@ -50,13 +51,7 @@ public sealed interface Action {
     return buildable;
   }
 
-  static private fr.ecoders.zombie.card.Upgrade handUpgrade(ArrayList<Card> hand, int index) {
-    var card = handCard(hand, index);
-    if (!(card instanceof fr.ecoders.zombie.card.Upgrade upgrade)) {
-      throw new IllegalArgumentException("Card " + card + " is not Upgrade");
-    }
-    return upgrade;
-  }
+  Action DRAW_CARD = new DrawCard();
 
   GameState play(GameState state, String currentUsername);
 
@@ -119,6 +114,37 @@ public sealed interface Action {
       player = player.withHand(hand)
         .withCamp(camp);
       return state.withPlayer(currentUsername, player);
+    }
+  }
+
+  static private Upgrade handUpgrade(ArrayList<Card> hand, int index) {
+    var card = handCard(hand, index);
+    if (!(card instanceof Upgrade upgrade)) {
+      throw new IllegalArgumentException("Card " + card + " is not Upgrade");
+    }
+    return upgrade;
+  }
+
+  final class DrawCard implements Action {
+    private DrawCard() {
+    }
+
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var hand = new ArrayList<>(player.hand());
+      var cards = new ArrayList<>(state.cards());
+      var discards = new ArrayList<>(state.discards());
+      if (cards.isEmpty()) {
+        Collections.shuffle(discards);
+        cards.addAll(discards);
+        discards.clear();
+      }
+
+      player = player.withHand(hand);
+      return state.withPlayer(currentUsername, player)
+        .withCards(cards)
+        .withDiscards(discards);
     }
   }
 

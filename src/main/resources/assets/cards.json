@@ -13,6 +13,9 @@
     },
     "search": {
       "MATERIALS": 1
+    },
+    "electrified": {
+      "PEOPLE": 1
     }
   },
   {
@@ -57,6 +60,9 @@
     },
     "search": {
       "FOOD": 1
+    },
+    "electrified": {
+      "FOOD": 1
     }
   },
   {
@@ -94,7 +100,7 @@
   {
     "type": "Building",
     "replica": 8,
-    "name": "Logging tent",
+    "name": "Logging yard",
     "cost": {
       "MATERIALS": 1
     },
@@ -258,12 +264,12 @@
     "type": "Upgrade",
     "name": "Diesel generator",
     "cost": {
-      "MATERIALS": 1
+      "MATERIALS": 0
     },
     "production": {
-      "FUEL": -1
+      "FUEL": 0
     },
     "isPowerGenerator": true,
-    "replica": 3
+    "replica": 30
   }
 ]

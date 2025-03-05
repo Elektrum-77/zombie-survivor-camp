@@ -77,10 +77,14 @@ public final class Game {
                 }
               } catch (InterruptedException e) {
                 LOGGER.log(Level.WARNING, "Player " + player + " disconnected due to InterruptedException.", e);
-                synchronized (lock) {
-                  handlers.remove(player);
-                  playerOrder.remove(player);
-                  lock.notifyAll();
+              } finally {
+                if (!turns.containsKey(player)) {
+                  handler.kick();
+                  synchronized (lock) {
+                    handlers.remove(player);
+                    playerOrder.remove(player);
+                    lock.notifyAll();
+                  }
                 }
               }
             });
@@ -88,7 +92,7 @@ public final class Game {
         .toList();
 
       // waits all player
-      if (turns.size() != playerOrder.size()) {
+      while (turns.size() != playerOrder.size()) {
         try {
           lock.wait();
         } catch (InterruptedException e) {

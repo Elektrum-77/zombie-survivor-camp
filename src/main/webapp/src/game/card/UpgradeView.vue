@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Upgrade } from "@/game/card/Card.ts";
 import ResourceBankView from "@/game/ResourceBankView.vue";
-import { ICON_ACTION_CONSTRUCT } from "@/icon.ts";
+import { ICON_ACTION_CONSTRUCT } from "@/assets/icon.ts";
 import { Icon } from "@iconify/vue";
 
 defineProps<Upgrade>()

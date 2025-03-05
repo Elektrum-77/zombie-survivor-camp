@@ -2,7 +2,7 @@
 import type { Building } from "@/game/card/Card.ts";
 import ResourceBankView from "@/game/ResourceBankView.vue";
 import { Icon } from "@iconify/vue";
-import { ICON_ACTION_CONSTRUCT, ICON_ACTION_SEARCH } from "@/icon.ts";
+import { ICON_ACTION_CONSTRUCT, ICON_ACTION_SEARCH } from "@/assets/icon.ts";
 
 defineProps<Building>()
 </script>
