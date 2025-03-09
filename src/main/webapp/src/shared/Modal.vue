@@ -1,31 +1,19 @@
 <script setup lang="ts">
-import { watch } from 'vue';
 import { vOnClickOutside } from "@vueuse/components";
 
-const {show} = defineProps<{ show: boolean; }>()
-const emit = defineEmits<{
-  opened: [],
-  closed: [],
-}>()
-
-watch(() => show, (v) => v ? emit('opened') : emit("closed"))
+defineProps<{ show: boolean; }>()
+defineEmits<{
+  close: [],
+}>();
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="show" class="modal-background">
-      <div class="modal-content" v-on-click-outside="()=>show=false">
+      <div class="modal-content" v-on-click-outside="()=>$emit('close')">
         <slot/>
       </div>
     </div>
-    <slot
-      name="state"
-      :close="()=>show=false"
-      :open="()=>show=true"
-      :show="(v:boolean)=>show=v"
-      :is-opened="show"
-      :is-closed="!show"
-    />
   </Teleport>
 </template>
 

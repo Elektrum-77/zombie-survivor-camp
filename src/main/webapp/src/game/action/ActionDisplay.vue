@@ -3,7 +3,7 @@ import { computed, shallowRef } from "vue";
 import type { Action, ActionType } from "@/game/action/Action.ts";
 import { ICON_ACTION } from "@/assets/icon.ts";
 import { Icon } from "@iconify/vue";
-import Modal from "@/Modal.vue";
+import Modal from "@/shared/Modal.vue";
 
 const {actions} = defineProps<{ actions: Action[] }>()
 defineEmits<{ selected: [Action] }>()
@@ -17,6 +17,12 @@ const actionByType = computed(() => {
 })
 
 const multipleChoiceActions = shallowRef<Action[]>([])
+
+function isRed(type: ActionType): boolean {
+  return type === "DestroyBuilding"
+    || type === "CancelSearch"
+    || type === "Discard"
+}
 </script>
 
 <template>
@@ -24,12 +30,14 @@ const multipleChoiceActions = shallowRef<Action[]>([])
     <Icon
       v-for="(list, type) in actionByType"
       :icon="ICON_ACTION[type]"
-      :color="type === 'DestroyBuilding' || type === 'CancelSearch' ? 'red' : undefined"
+      :style="isRed(type) ? {'--color': 'red'} : undefined"
       @click="() => list.length > 1 ? multipleChoiceActions = list : $emit('selected', list[0])"
-      width="2rem"
-      height="2rem"
+      class="hover-blur"
     />
-    <Modal :show="multipleChoiceActions.length > 1">
+    <Modal
+      :show="multipleChoiceActions.length > 1"
+      @close="multipleChoiceActions = []"
+    >
       <ul class="action-list">
         <li
           v-for="(action, i) in multipleChoiceActions" :key="i"

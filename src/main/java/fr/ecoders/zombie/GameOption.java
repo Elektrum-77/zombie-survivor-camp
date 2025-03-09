@@ -2,13 +2,18 @@ package fr.ecoders.zombie;
 
 import fr.ecoders.zombie.card.Building;
 import fr.ecoders.zombie.card.Card;
+import fr.ecoders.zombie.card.Upgrade;
 import fr.ecoders.zombie.state.Camp;
 import fr.ecoders.zombie.state.ResourceBank;
 import fr.ecoders.zombie.state.UpgradableBuilding;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface GameOption {
@@ -47,7 +52,26 @@ public interface GameOption {
 
     var starterBuildings = Stream.of(campingTents, rainCollectors, vegetableGardens)
       .map(UpgradableBuilding::ofBuilding)
-      .toList();
+      .collect(Collectors.toCollection(ArrayList::new));
+    starterBuildings.set(
+      0,
+      starterBuildings.getFirst()
+        .withUpgrades(List.of(
+          new Upgrade(
+            "Perfect solar panels",
+            ResourceBank.EMPTY,
+            ResourceBank.EMPTY,
+            true,
+            false,
+            Optional.empty()
+          ), new Upgrade(
+            "Additional sleeping bag",
+            ResourceBank.EMPTY,
+            new ResourceBank(Map.of(Resource.PEOPLE, 1)),
+            false,
+            false,
+            Optional.empty()
+          ))));
     var camp = new Camp(6, starterBuildings, List.of(), List.of(), ResourceBank.EMPTY);
     return new Impl(5, 15, 3, 1, camp, cards);
   }

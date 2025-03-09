@@ -1,39 +1,33 @@
 <script setup lang="ts">
-import type { Upgrade } from "@/game/card/Card.ts";
-import ResourceBankView from "@/game/ResourceBankView.vue";
-import { ICON_ACTION_CONSTRUCT } from "@/assets/icon.ts";
-import { Icon } from "@iconify/vue";
+import CardLayout from "@/game/card/CardLayout.vue";
+import type { Upgrade } from "@/game/card/type.ts";
+import CardImage from "@/game/card/CardImage.vue";
+import { ICON_ACTION, ICON_POWER_GENERATOR } from "@/assets/icon.ts";
+import { Icon } from "@iconify/vue"
+import CardStat from "@/game/card/CardStat.vue";
+import CardName from "@/game/card/CardName.vue";
+
 
 defineProps<Upgrade>()
 </script>
 
 <template>
-  <div class="upgrade-layout col">
-    <div class="row">
-      <Icon :icon="ICON_ACTION_CONSTRUCT" color="red" width="2rem" height="2rem"/>
-      <ResourceBankView :bank="cost" opposite/>
+  <CardLayout>
+    <CardName :name/>
+    <CardImage :name/>
+    <CardStat :icon="ICON_ACTION['UpgradeBuilding']" icon-color="red" :bank="cost" opposite/>
+
+    <div class="row" style="justify-content: space-between">
+      <CardStat :icon="ICON_ACTION['UpgradeBuilding']" :bank="production"/>
+      <Icon
+        v-if="isPowerGenerator"
+        :icon="ICON_POWER_GENERATOR"
+        style="--color: lightseagreen"
+      />
     </div>
-    <div class="row">
-      <Icon :icon="ICON_ACTION_CONSTRUCT" width="2rem" height="2rem"/>
-      <ResourceBankView :bank="production"/>
-    </div>
-    <div class="row">
-      <Icon v-if="isPowerGenerator" icon="mdi:electricity-generator" width="2rem" height="2rem"/>
-    </div>
-  </div>
+  </CardLayout>
 </template>
 
 <style scoped>
-.upgrade-layout {
-  gap: 0.5rem;
-}
-
-.upgrade-layout > div {
-  gap: 0;
-}
-
-.upgrade-layout > div > *:first-child {
-  border-right: dashed;
-}
 
 </style>

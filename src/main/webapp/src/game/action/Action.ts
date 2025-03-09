@@ -1,11 +1,13 @@
 export type Action =
-  ConstructAction
+  | DiscardAction
+  | ConstructAction
   | SendZombieAction
   | SearchAction
   | DestroyBuildingAction
   | CancelSearchAction
   | UpgradeBuildingAction
 
+export type DiscardAction = { type: "Discard", value: { index: number } }
 export type ConstructAction = { type: "Construct", value: { index: number } }
 export type SearchAction = { type: "Search", value: { index: number } }
 export type DestroyBuildingAction = { type: "DestroyBuilding", value: { index: number } }

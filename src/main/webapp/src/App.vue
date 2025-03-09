@@ -6,7 +6,6 @@ import Lobby from "@/Lobby.vue";
 import Game from "@/game/Game.vue";
 import { type Event, useChat, useGame, useLobby } from "@/game/game.ts";
 import type { Action } from "@/game/action/Action.ts";
-import { ModalsContainer } from 'vue-final-modal'
 
 const username = useLocalStorage("username", "")
 
@@ -101,7 +100,6 @@ function sendAction(action: Action) {
       />
       <Chat class="chat" :messages="messages" @send="sendChatMessage" />
     </div>
-    <ModalsContainer/>
   </div>
 </template>
 

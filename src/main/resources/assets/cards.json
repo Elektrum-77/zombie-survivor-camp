@@ -145,20 +145,18 @@
     }
   },
   {
-    "type": "Building",
-    "replica": 4,
-    "name": "Ammunition workbench",
+    "type": "Upgrade",
+    "replica": 2,
+    "name": "Ammunition press",
     "cost": {
-      "MATERIALS": 1
+      "MATERIALS": 2
     },
     "production": {
-      "AMMUNITION": 1,
       "MATERIALS": -1,
-      "PEOPLE": -1
+      "AMMUNITION": 1
     },
-    "search": {
-      "MATERIALS": 1
-    }
+    "isUnique": true,
+    "categoryFilter": "STORAGE"
   },
   {
     "type": "Building",
@@ -171,6 +169,22 @@
       "MILITARY": 1,
       "AMMUNITION": -1,
       "PEOPLE": -1
+    },
+    "search": {
+      "MATERIALS": 1
+    }
+  },
+  {
+    "type": "Building",
+    "replica": 4,
+    "name": "Storage shed",
+    "category": "STORAGE",
+    "cost": {
+      "MATERIALS": 2,
+      "PEOPLE": 1
+    },
+    "production": {
+      "MATERIALS": 1
     },
     "search": {
       "MATERIALS": 1
@@ -264,12 +278,63 @@
     "type": "Upgrade",
     "name": "Diesel generator",
     "cost": {
-      "MATERIALS": 0
+      "MATERIALS": 1
     },
     "production": {
-      "FUEL": 0
+      "FUEL": -1
     },
     "isPowerGenerator": true,
-    "replica": 30
+    "replica": 3
+  },
+  {
+    "type": "Upgrade",
+    "name": "Green house",
+    "cost": {
+      "MATERIALS": 2
+    },
+    "production": {
+      "MATERIALS": -1,
+      "FOOD": 1
+    },
+    "categoryFilter": "AGRICULTURAL",
+    "replica": 3
+  },
+  {
+    "type": "Upgrade",
+    "name": "Hydroponics",
+    "cost": {
+      "MATERIALS": 1
+    },
+    "production": {
+      "WATER": -1,
+      "FOOD": 1
+    },
+    "categoryFilter": "AGRICULTURAL",
+    "replica": 3
+  },
+  {
+    "type": "Upgrade",
+    "name": "Solar panels",
+    "cost": {
+      "MATERIALS": 2
+    },
+    "production": {
+      "MATERIALS": -1
+    },
+    "isPowerGenerator": true,
+    "replica": 3
+  },
+  {
+    "type": "Upgrade",
+    "name": "Fortification",
+    "cost": {
+      "MATERIALS": 3
+    },
+    "production": {
+      "MATERIALS": -1,
+      "MILITARY": 1
+    },
+    "isUnique": true,
+    "replica": 3
   }
 ]

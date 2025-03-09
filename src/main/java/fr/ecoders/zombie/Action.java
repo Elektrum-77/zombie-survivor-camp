@@ -65,6 +65,7 @@ public sealed interface Action {
     var production = camp.production();
     var military = production.resource(Resource.MILITARY);
     var actions = new ArrayList<Action>();
+    actions.add(new Discard(cardIndex));
     switch (card) {
       case Building building -> {
         if (production.containsAll(camp.searchCost())) {
@@ -91,6 +92,21 @@ public sealed interface Action {
       }
     }
     return List.copyOf(actions);
+  }
+
+  record Discard(int index) implements Action {
+    @Override
+    public GameState play(GameState state, String currentUsername) {
+      var player = state.player(currentUsername);
+      var hand = new ArrayList<>(player.hand());
+      Objects.checkIndex(index, hand.size());
+
+      var discards = new ArrayList<>(state.discards());
+      var removed = hand.remove(index);
+      discards.add(removed);
+      player = player.withHand(hand);
+      return state.withPlayer(currentUsername, player).withDiscards(discards);
+    }
   }
 
   record UpgradeBuilding(

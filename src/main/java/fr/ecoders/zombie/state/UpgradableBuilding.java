@@ -9,7 +9,8 @@ import java.util.stream.Stream;
 
 public record UpgradableBuilding(
   Building building,
-  List<Upgrade> upgrades) {
+  List<Upgrade> upgrades
+  ) {
   public UpgradableBuilding {
     Objects.requireNonNull(building);
     upgrades = List.copyOf(upgrades);

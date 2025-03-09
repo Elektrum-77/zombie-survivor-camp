@@ -23,6 +23,7 @@
 
 /* semantic color variables for this project */
 :root {
+  --color: var(--vt-c-indigo);
   --color-background: var(--vt-c-white);
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
@@ -89,11 +90,47 @@ body {
 
 .row {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
+}
+
+.center-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hor {
+  display: flex;
+  justify-content: center;
+}
+
+.ver {
+  display: flex;
+  align-items: center;
+}
+
+.card-size {
+  width: 15rem;
+  height: 20rem;
+  /* weird but necessary */
+  min-width: 15rem;
+  min-height: 20rem;
+  max-width: 15rem;
+  max-height: 20rem;
+}
+
+svg {
+  color: var(--color);
+  width: 2rem;
+  height: 2rem;
+}
+
+.hover-blur:hover {
+  filter: drop-shadow(0 0 0.2rem oklch(from var(--color) calc(l - 0.15) c h) );
 }

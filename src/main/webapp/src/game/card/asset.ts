@@ -1,7 +1,7 @@
 import camping_tents from "@/assets/cards/camping_tents.webp"
 import rain_collectors from "@/assets/cards/rain_collectors.webp"
 import vegetable_gardens from "@/assets/cards/vegetable_gardens.webp"
-import ammunition_workbench from "@/assets/cards/ammunition_workbench.webp"
+import ammunition_press from "@/assets/cards/ammunition_workbench.webp"
 import hunter_tent from "@/assets/cards/hunter_tent.webp"
 import medical_tent from "@/assets/cards/medical_tent.webp"
 import training_yard from "@/assets/cards/training_yard.webp"
@@ -17,7 +17,7 @@ export const CARD_IMG = {
   camping_tents,
   rain_collectors,
   vegetable_gardens,
-  ammunition_workbench,
+  ammunition_press,
   hunter_tent,
   training_yard,
   logging_yard,
@@ -29,3 +29,7 @@ export const CARD_IMG = {
   infested_super_market,
   infested_house,
 } as const
+
+export function isCardImage(name: string): name is keyof typeof CARD_IMG {
+  return name in CARD_IMG
+}

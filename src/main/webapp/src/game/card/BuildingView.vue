@@ -1,37 +1,29 @@
 <script setup lang="ts">
-import type { Building } from "@/game/card/Card.ts";
-import ResourceBankView from "@/game/ResourceBankView.vue";
-import { Icon } from "@iconify/vue";
-import { ICON_ACTION_CONSTRUCT, ICON_ACTION_SEARCH } from "@/assets/icon.ts";
+import type { Building } from "@/game/card/type.ts";
+import { ICON_ACTION_CONSTRUCT, ICON_ACTION_SEARCH, ICON_POWER_GENERATOR } from "@/assets/icon.ts";
+import CardLayout from "@/game/card/CardLayout.vue";
+import CardImage from "@/game/card/CardImage.vue";
+import CardStat from "@/game/card/CardStat.vue";
+import CardName from "@/game/card/CardName.vue";
 
 defineProps<Building>()
 </script>
 
 <template>
-  <div class="building-layout col">
-    <div class="cost row">
-      <Icon :icon="ICON_ACTION_CONSTRUCT" color="red" width="2rem" height="2rem"/>
-      <ResourceBankView :bank="cost" opposite/>
-    </div>
-    <div class="production row">
-      <Icon :icon="ICON_ACTION_CONSTRUCT" width="2rem" height="2rem"/>
-      <ResourceBankView :bank="production"/>
-    </div>
-    <div class="search row">
-      <Icon :icon="ICON_ACTION_SEARCH" width="2rem" height="2rem"/>
-      <ResourceBankView :bank="search"/>
-    </div>
-  </div>
+  <CardLayout>
+    <CardName :name/>
+    <CardStat :icon="ICON_ACTION_SEARCH" :bank="search"/>
+    <CardImage :name/>
+    <CardStat :icon="ICON_ACTION_CONSTRUCT" :bank="cost" icon-color="red" opposite/>
+    <CardStat
+      v-if="electrified"
+      :icon="ICON_POWER_GENERATOR"
+      :bank="electrified"
+      icon-color="lightseagreen"
+    />
+    <CardStat :icon="ICON_ACTION_CONSTRUCT" :bank="production"/>
+  </CardLayout>
 </template>
 
 <style scoped>
-.building-layout {
-  gap: 0.5rem;
-}
-.building-layout > div {
-  gap: 0;
-}
-.building-layout > div > *:first-child {
-  border-right: dashed;
-}
 </style>

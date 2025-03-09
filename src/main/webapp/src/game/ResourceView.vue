@@ -3,27 +3,22 @@
 import { ICON_RESOURCES } from "@/assets/icon.ts";
 import { Icon } from "@iconify/vue";
 import type { Resource } from "@/game/ResourceBank.ts";
+import { computed } from "vue";
 
-defineProps<{ resource: Resource, count: number }>()
+const {count = 1, color, negativeColor = 'red'} = defineProps<{
+  resource: Resource
+  count?: number
+  color?: string
+  negativeColor?: string
+}>()
+const iconColor = computed(() => count < 0 ? negativeColor : color)
 </script>
 
 <template>
-  <div class="row" style="gap: 0">
-    <!--
+  <div class="row resource-view" style="gap: 0">
     <Icon
-      v-for="_ in Math.abs(v ?? 0)"
-      :color="(v??0)<0 ?'red' : undefined"
-      :icon="ICON_RESOURCES[r]"
-      width="2rem"
-      height="2rem"
-      inline
-    />
-    -->
-    <Icon
-      :color="(count)<0 ?'red' : undefined"
+      :style="iconColor ? {'--color': iconColor} : undefined"
       :icon="ICON_RESOURCES[resource]"
-      width="2rem"
-      height="2rem"
       inline
     />
     <span
@@ -34,5 +29,7 @@ defineProps<{ resource: Resource, count: number }>()
 </template>
 
 <style scoped>
-
+span {
+  font-weight: bold;
+}
 </style>

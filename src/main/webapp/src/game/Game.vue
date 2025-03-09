@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { GameState } from "@/game/game.ts";
-import CampSelector from "@/game/camp/CampSelector.vue";
 import CampView from "@/game/camp/CampView.vue";
-import type {Action} from "@/game/action/Action.ts";
+import type { Action } from "@/game/action/Action.ts";
 import HandView from "@/game/HandView.vue";
-import {ref, shallowRef} from "vue";
-import {onKeyStroke} from "@vueuse/core";
+import { ref, shallowRef } from "vue";
+import { onKeyStroke } from "@vueuse/core";
+import Button from "@/shared/Button.vue";
+import { vElementHover } from "@vueuse/components";
 
 const {state} = defineProps<{ state: GameState }>()
 const selectedUsername = ref<string>(state.currentPlayer)
@@ -22,14 +23,18 @@ onKeyStroke(" ", () => {
 
 <template>
   <div class="game-layout">
-    <div>
-      <CampSelector
-        :usernames="Object.keys(state.camps)"
-        v-model:selected="selectedUsername"/>
+    <div class="row">
+      <Button
+        v-for="username in Object.keys(state.camps)"
+        v-text="username"
+        :key="username"
+        :aria-selected="selectedUsername === username"
+        @click="()=>selectedUsername = username"
+      />
     </div>
     <div class="camp-container">
       <h2>Camp</h2>
-      <CampView v-bind="state.camps[selectedUsername]" @action="$emit('action',$event)"/>
+      <CampView :camp="state.camps[selectedUsername]" @action="$emit('action',$event)"/>
     </div>
     <div
       v-show="state.hand.length > 0"
@@ -38,6 +43,7 @@ onKeyStroke(" ", () => {
     >
       <div></div>
       <HandView
+        v-element-hover="(v)=>showHand = v"
         :camp="state.camps[state.currentPlayer]"
         :hand="state.hand"
         @action="$emit('action',$event)"

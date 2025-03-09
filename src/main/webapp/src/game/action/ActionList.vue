@@ -17,10 +17,8 @@ defineEmits<{selected: [T]}>()
   <Icon
     v-for="{value, icon, color} in actions"
     :icon
-    :color
+    :style="color ? {'--color': color} : undefined"
     @click="$emit('selected', value)"
-    width="2rem"
-    height="2rem"
   />
 </div>
 </template>

@@ -1,5 +1,7 @@
 package fr.ecoders.zombie;
 
+import fr.ecoders.zombie.Action.Discard;
+import fr.ecoders.zombie.Action.DrawCard;
 import fr.ecoders.zombie.Action.UpgradeBuilding;
 import fr.ecoders.zombie.Action.SendZombie;
 import fr.ecoders.zombie.Action.CancelSearch;
@@ -66,7 +68,7 @@ public final class PlayerTurn {
       }
       state = action.play(state, currentPlayer);
       isDone = switch (action) {
-        case UpgradeBuilding _, SendZombie _, Construct _, Search _ -> true;
+        case Discard _, DrawCard _, UpgradeBuilding _, SendZombie _, Construct _, Search _ -> true;
         case CancelSearch _, DestroyBuilding _ -> false;
       };
       actions.add(action);

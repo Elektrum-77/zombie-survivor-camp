@@ -79,6 +79,8 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         provider.defaultSerializeValue(building.production(), generator);
         generator.writeFieldName("search");
         provider.defaultSerializeValue(building.search(), generator);
+        generator.writeFieldName("electrified");
+        provider.defaultSerializeValue(building.electrified(), generator);
         generator.writeEndObject();
         generator.writeEndObject();
       }
@@ -126,21 +128,8 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         generator.writeFieldName("production");
         provider.defaultSerializeValue(upgrade.production(), generator);
         generator.writeBooleanField("isPowerGenerator", upgrade.isPowerGenerator());
-
-        generator.writeObjectFieldStart("filter");
-        switch (upgrade.filter()) {
-          case Upgrade.Filter.Const c when c.equals(Upgrade.Filter.NONE) -> generator.writeStringField("type", "None");
-          case Upgrade.Filter.Const c when c.equals(Upgrade.Filter.UNIQUE) ->
-            generator.writeStringField("type", "Unique");
-          case Upgrade.Filter.Const c -> throw new AssertionError("Unsupported const filter " + c);
-          case Upgrade.Filter.IsCategory(Building.Category category) -> {
-            generator.writeStringField("type", "IsCategory");
-            generator.writeFieldName("category");
-            provider.defaultSerializeValue(category, generator);
-          }
-        }
-        generator.writeEndObject();
-
+        generator.writeBooleanField("isUnique", upgrade.isUnique());
+        generator.writePOJOField("categoryFilter", upgrade.categoryFilter());
         generator.writeEndObject();
         generator.writeEndObject();
       }
@@ -287,6 +276,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
           case Action.Construct(int index) -> generator.writeNumberField("index", index);
           case Action.DestroyBuilding(int index) -> generator.writeNumberField("index", index);
           case Action.Search(int index) -> generator.writeNumberField("index", index);
+          case Action.Discard(int index) -> generator.writeNumberField("index", index);
           case Action.SendZombie(String username, int index) -> {
             generator.writeNumberField("index", index);
             generator.writeStringField("username", username);
@@ -339,6 +329,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         var type = getAs(root.get("type"), JsonNode::asText).orElseThrow(
           () -> new IllegalArgumentException("Missing type in " + root.toPrettyString()));
         return (switch (type) {
+          case "Discard" -> readTreeAs(root.get("value"), context, Action.Discard.class);
           case "DrawCard" -> Optional.of(Action.DRAW_CARD);
           case "UpgradeBuilding" -> readTreeAs(root.get("value"), context, Action.UpgradeBuilding.class);
           case "SendZombie" -> readTreeAs(root.get("value"), context, Action.SendZombie.class);
@@ -376,8 +367,9 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
             var production = readTreeAs(root.get("production"), context, ResourceBank.class).orElse(ResourceBank.EMPTY);
             var cost = readTreeAs(root.get("cost"), context, ResourceBank.class).orElse(ResourceBank.EMPTY);
             var isPowerGenerator = getAs(root.get("isPowerGenerator"), JsonNode::asBoolean).orElse(false);
-            var filter = readTreeAs(root.get("filter"), context, Upgrade.Filter.class).orElse(Upgrade.Filter.NONE);
-            yield new Upgrade(name, cost, production, isPowerGenerator, filter);
+            var isUnique = getAs(root.get("isUnique"), JsonNode::asBoolean).orElse(false);
+            var categoryFilter = readTreeAs(root.get("categoryFilter"), context, Building.Category.class);
+            yield new Upgrade(name, cost, production, isPowerGenerator, isUnique, categoryFilter);
           }
           default -> throw new IllegalArgumentException("Unknown type: " + type);
         };
@@ -395,24 +387,7 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
         return new GameOption.CardOption(card, replica);
       }
     };
-  private static final JsonDeserializer<Upgrade.Filter> FILTER_JSON_DESERIALIZER =
-    new StdDeserializer<>(Upgrade.Filter.class) {
-      @Override
-      public Upgrade.Filter deserialize(JsonParser jsonParser, DeserializationContext context)
-      throws IOException {
-        var codec = jsonParser.getCodec();
-        var root = (JsonNode) codec.readTree(jsonParser);
-        var type = root.get("type")
-          .asText();
-        return switch (type) {
-          case "IsCategory" ->
-            new Upgrade.Filter.IsCategory(context.readTreeAsValue(root.get("category"), Building.Category.class));
-          case "Unique" -> Upgrade.Filter.UNIQUE;
-          case "None" -> Upgrade.Filter.NONE;
-          default -> throw new IllegalArgumentException("Unknown filter type " + type);
-        };
-      }
-    };
+
 
   private static <V> Optional<V> getAs(JsonNode node, Function<? super JsonNode, ? extends V> mapper) {
     return Optional.ofNullable(node)
@@ -454,7 +429,6 @@ public class CustomObjectMapperCustomizer implements ObjectMapperCustomizer {
     module.addDeserializer(Card.class, CARD_JSON_DESERIALIZER);
     module.addDeserializer(ResourceBank.class, RESOURCE_BANK_JSON_DESERIALIZER);
     module.addDeserializer(GameOption.CardOption.class, CARD_OPTION_JSON_DESERIALIZER);
-    module.addDeserializer(Upgrade.Filter.class, FILTER_JSON_DESERIALIZER);
 
     mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     mapper.registerModule(module);

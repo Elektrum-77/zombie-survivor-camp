@@ -25,6 +25,6 @@ public record Building(
   }
 
   public enum Category {
-    AGRICULTURAL, STOCKAGE, WORKBENCH, WATCH_TOWER
+    AGRICULTURAL, STORAGE, WORKBENCH, WATCH_TOWER
   }
 }
