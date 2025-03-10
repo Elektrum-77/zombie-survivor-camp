@@ -37,6 +37,7 @@
   --section-gap: 160px;
 }
 
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --color-background: var(--vt-c-black);
@@ -50,13 +51,20 @@
     --color-text: var(--vt-c-text-dark-2);
   }
 }
+*/
+
+button {
+  all: unset;
+}
 
 *,
 *::before,
 *::after {
+  color: var(--color);
   box-sizing: border-box;
   margin: 0;
   font-weight: normal;
+  transition: all 0.25s;
 }
 
 body {
@@ -90,34 +98,56 @@ body {
 
 .row {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: row;
 }
 
 .col {
   display: flex;
   flex-direction: column;
+}
+
+.gap {
   gap: 0.5rem;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.rounded {
+  border-radius: 0.8rem;
+}
+
+.bordered {
+  border: 0.2rem solid var(--color);
+}
+
+.padded {
+  padding: 0.5rem;
 }
 
 .center-content {
   display: flex;
-  align-items: center;
   justify-content: center;
 }
 
-.hor {
-  display: flex;
-  justify-content: center;
-}
-
-.ver {
+.center-items {
   display: flex;
   align-items: center;
+}
+
+:root {
+  --card-width: 15rem;
+  --card-height: 20rem;
+}
+
+* {
+  overflow: visible;
 }
 
 .card-size {
-  width: 15rem;
-  height: 20rem;
+  width: var(--card-width);
+  height: var(--card-height);
   /* weird but necessary */
   min-width: 15rem;
   min-height: 20rem;
@@ -126,11 +156,48 @@ body {
 }
 
 svg {
-  color: var(--color);
-  width: 2rem;
-  height: 2rem;
+  font-size: 2rem;
 }
 
 .hover-blur:hover {
   filter: drop-shadow(0 0 0.2rem oklch(from var(--color) calc(l - 0.15) c h) );
+}
+
+.clickable {
+  cursor: pointer;
+
+  &:hover, &[focused=true] {
+    box-shadow: 0 0 0.5rem oklch(from var(--color) calc(l + 0.25) c h);
+  }
+
+  &[disabled=true] {
+    --disabled-color: oklch(from var(--color) calc(l + 0.25) c h);
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: unset;
+    color: var(--disabled-color);
+    border-color: var(--disabled-color);
+    background-color: rgb(from var(--disabled-color) r g b / 10%);
+  }
+}
+
+@keyframes tilt-shaking {
+  0% { transform: rotate(0deg); }
+  5% { transform: rotate(5deg); }
+  10% { transform: rotate(0deg); }
+  15% { transform: rotate(-5deg); }
+  20% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  30% { transform: rotate(0deg); }
+  35% { transform: rotate(-5deg); }
+  40% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.tilt-shaking-loop {
+  animation: tilt-shaking 1s infinite linear;
+}
+
+.tilt-shaking-on-hover:hover {
+  animation: tilt-shaking 1s infinite linear;
 }

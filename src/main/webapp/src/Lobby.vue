@@ -19,17 +19,19 @@ watch(() => ready.value, isReady => emit("ready", isReady))
 </script>
 
 <template>
-  <div>
-    <div class="col" style="align-items: center">
-      <h2>Lobby</h2>
-      <div class="row player-list">
-        <div v-for="(isReady, username) in players" class="col player">
-          <span class="username" v-text="username"/>
-          <span :ready="isReady" v-text="readyLabel(isReady)"/>
-        </div>
+  <div class="col center-items center-content gap">
+    <h1>Lobby</h1>
+    <div class="row player-list">
+      <div v-for="(isReady, username) in players" class="col player">
+        <span class="username" v-text="username"/>
+        <span :ready="isReady" v-text="readyLabel(isReady)"/>
       </div>
-      <button @click="ready = !ready">{{readyLabel(!ready)}}</button>
     </div>
+    <button
+      class="clickable bordered padded rounded"
+      @click="ready = !ready"
+      v-text="readyLabel(!ready)"
+    />
   </div>
 </template>
 

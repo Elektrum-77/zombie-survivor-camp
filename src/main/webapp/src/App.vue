@@ -6,12 +6,16 @@ import Lobby from "@/Lobby.vue";
 import Game from "@/game/Game.vue";
 import { type Event, useChat, useGame, useLobby } from "@/game/game.ts";
 import type { Action } from "@/game/action/Action.ts";
+import { Icon } from "@iconify/vue";
+import { ref } from "vue";
 
 const username = useLocalStorage("username", "")
 
 const {players: lobbyPlayers, onMessage: onLobbyMessage} = useLobby()
 const {state, players: gamePlayers, onMessage: onGameMessage} = useGame()
 const {messages, addSystemMessage, addMessage} = useChat()
+
+const isChatOpen = ref(true);
 
 const {status, send, open} = useWebSocket(() =>
   (`ws://localhost:49152/game/${username.value}`), {
@@ -80,16 +84,23 @@ function sendAction(action: Action) {
 </script>
 
 <template>
-  <div>
-    <div class="layout">
-      <span v-if="status==='CONNECTING'">Connecting...</span>
+  <template v-if="status==='CONNECTING'">
+    <span>Connecting...</span>
+  </template>
+  <template v-else-if="status==='CLOSED'">
+    <div class="center-content center-items" style="width: 100%; height: 100%;">
       <Login
-        v-else-if="status==='CLOSED'"
         v-model:username="username"
         @connect="open"
       />
+    </div>
+  </template>
+  <template v-else>
+    <div
+      class="layout" :chat="isChatOpen"
+    >
       <Lobby
-        v-else-if="state===undefined"
+        v-if="state===undefined"
         :players="lobbyPlayers"
         @ready="setReady($event)"
       />
@@ -97,10 +108,16 @@ function sendAction(action: Action) {
         v-else
         :state="state"
         @action="sendAction($event)"
+
       />
-      <Chat class="chat" :messages="messages" @send="sendChatMessage" />
+      <Chat class="chat" :messages="messages" @send="sendChatMessage"/>
+      <div class="chat-button-container center-items">
+        <div class="chat-button clickable bordered" @click="() => isChatOpen = !isChatOpen">
+          <Icon icon="mdi:message-group"/>
+        </div>
+      </div>
     </div>
-  </div>
+  </template>
 </template>
 
 <style scoped>
@@ -109,20 +126,50 @@ function sendAction(action: Action) {
   width: 100%;
   height: 100%;
   max-height: 100%;
-  grid-template-columns: 1fr 20vw;
+  grid-template-columns: 1fr 0;
   background-color: #f8f8f8;
+  transition: all 0.5s;
+
+  &[chat=true] {
+    grid-template-columns: 1fr 20vw;
+  }
 }
 
 .chat {
   border-left: 1px solid transparent;
   padding: 8px;
-  height: 100vh;
+  height: 100%;
   transition: all 0.5s;
+
+  &:focus-within {
+    border-left: 1px solid #ccc;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    background-color: white;
+  }
 }
 
-.chat:focus-within {
-  border-left: 1px solid #ccc;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  background-color: white;
+.chat-button-container {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  .chat-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 4rem;
+    width: 4rem;
+    border-radius: 50% 0 0 50%;
+
+    position: relative;
+    left: 50%;
+
+    &:hover {
+      transform: translateX(-50%);
+    }
+  }
+
 }
 </style>

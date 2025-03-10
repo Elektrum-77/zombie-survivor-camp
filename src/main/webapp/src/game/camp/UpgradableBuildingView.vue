@@ -11,7 +11,7 @@ defineProps<UpgradableBuilding>()
 </script>
 
 <template>
-  <div class="col" style="gap: 0">
+  <div class="col rounded" style="height: fit-content; width: fit-content;">
     <BuildingView v-bind="building.value" :style="{'z-index': upgrades.length}"/>
     <div
       v-for="({value:{name, production, isPowerGenerator}}, i) in upgrades"

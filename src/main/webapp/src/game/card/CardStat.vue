@@ -15,7 +15,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="row" style="gap: 0;">
+  <div class="row">
     <Icon :icon :style="iconColor ? {'--color': iconColor} : undefined"/>
     <template v-if="bank && !skeleton">
       <span>:</span>

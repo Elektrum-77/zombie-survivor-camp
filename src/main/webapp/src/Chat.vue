@@ -28,7 +28,7 @@ function send(msg: string): void {
 
 <template>
   <div class="chat-layout">
-    <div class="container">
+    <div class="hand">
       <ul class="messages">
         <li v-for="{username, text, timestamp} in messages">
           <p v-text="`${dayjs(timestamp).format('HH:mm')} - ${username} : ${text}`"/>
@@ -37,8 +37,19 @@ function send(msg: string): void {
     </div>
 
     <div class="input-section">
-      <input type="text" @keyup.enter="send(message)" v-model="message">
-      <button @click="send(message)" :disabled="message.trim()===''">send</button>
+      <input
+        class="bordered rounded clickable"
+        type="text"
+        @keyup.enter="send(message)"
+        v-model="message"
+      />
+      <div
+        class="clickable rounded bordered padded row center-content"
+        @click="send(message)"
+        :disabled="message.trim()===''"
+      >
+        <span style="width: min-content">send</span>
+      </div>
     </div>
   </div>
 </template>
@@ -50,7 +61,7 @@ function send(msg: string): void {
   justify-content: end;
 }
 
-.container {
+.hand {
   overflow-y: auto;
   display: flex;
   flex-direction: column-reverse;

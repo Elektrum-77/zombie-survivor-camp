@@ -11,7 +11,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="row resource-bank-view">
+  <div class="row">
     <div v-for="(v,r) in bank" class="row">
       <ResourceView v-if="v && v!=0" :resource="r" :count="opposite ? -v : v" :color :negativeColor />
     </div>
@@ -19,7 +19,4 @@ defineProps<{
 </template>
 
 <style scoped>
-.resource-bank-view, .resource-bank-view > div {
-  gap: 0;
-}
 </style>

@@ -15,7 +15,7 @@ const iconColor = computed(() => count < 0 ? negativeColor : color)
 </script>
 
 <template>
-  <div class="row resource-view" style="gap: 0">
+  <div class="row resource-view">
     <Icon
       :style="iconColor ? {'--color': iconColor} : undefined"
       :icon="ICON_RESOURCES[resource]"

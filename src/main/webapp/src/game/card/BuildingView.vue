@@ -11,19 +11,27 @@ defineProps<Building>()
 
 <template>
   <CardLayout>
-    <CardName :name/>
-    <CardStat :icon="ICON_ACTION_SEARCH" :bank="search"/>
-    <CardImage :name/>
-    <CardStat :icon="ICON_ACTION_CONSTRUCT" :bank="cost" icon-color="red" opposite/>
-    <CardStat
-      v-if="electrified"
-      :icon="ICON_POWER_GENERATOR"
-      :bank="electrified"
-      icon-color="lightseagreen"
-    />
-    <CardStat :icon="ICON_ACTION_CONSTRUCT" :bank="production"/>
+    <div class="building">
+      <CardName :name />
+      <CardStat :icon="ICON_ACTION_SEARCH" :bank="search" />
+      <CardImage :name />
+      <CardStat :icon="ICON_ACTION_CONSTRUCT" :bank="cost" icon-color="red" opposite />
+      <CardStat
+        v-if="electrified"
+        :icon="ICON_POWER_GENERATOR"
+        :bank="electrified"
+        icon-color="lightseagreen"
+      />
+      <CardStat :icon="ICON_ACTION_CONSTRUCT" :bank="production" />
+    </div>
   </CardLayout>
 </template>
 
 <style scoped>
+.building {
+  max-width: 100%;
+  max-height: 100%;
+  display: grid;
+  grid-template-rows: 2rem 2rem minmax(0, 1fr) 2rem 2rem 2rem;
+}
 </style>

@@ -11,7 +11,6 @@ defineEmits<{action: [Action]}>()
 const hovered = ref(false)
 const clicked = ref(false)
 const focused = computed(() => hovered.value || clicked.value)
-const log = console.log;
 </script>
 
 <template>
@@ -22,11 +21,16 @@ const log = console.log;
     @click="()=>clicked=true"
   >
     <div>
-      <Transition name="fade">
-        <ActionDisplay v-show="focused" :actions @selected="$emit('action', $event)"/>
+      <Transition>
+        <ActionDisplay
+          v-show="focused"
+          class="actions"
+          :actions
+          @selected="$emit('action',$event)"
+        />
       </Transition>
     </div>
-    <CardView :card :focused class="card-view"/>
+    <CardView :card :focused class="card-view clickable"/>
   </div>
 </template>
 
@@ -34,6 +38,7 @@ const log = console.log;
 .card-view-action {
   display: grid;
   grid-template-rows: 2rem 1fr;
+  pointer-events: auto;
 }
 
 .card-view {
@@ -43,13 +48,15 @@ const log = console.log;
 
 .card-view[focused=true] {
   transform: translateY(0.5rem);
-  box-shadow: 0 0 32px rgba(0, 0, 0, 0.1);
 }
 
-.fade-enter-active, .fade-leave-active {
+.v-enter-active,
+.v-leave-active {
   transition: opacity 0.25s ease-in-out;
 }
-.fade-enter-from, .fade-leave-to {
+
+.v-enter-from,
+.v-leave-to {
   opacity: 0;
 }
 </style>

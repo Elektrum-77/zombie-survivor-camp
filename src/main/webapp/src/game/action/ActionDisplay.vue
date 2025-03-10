@@ -26,13 +26,14 @@ function isRed(type: ActionType): boolean {
 </script>
 
 <template>
-  <div class="row action-types">
+  <div class="row gap center-content">
     <Icon
       v-for="(list, type) in actionByType"
-      :icon="ICON_ACTION[type]"
       :style="isRed(type) ? {'--color': 'red'} : undefined"
+      style="width: 2rem; height: 2rem;"
       @click="() => list.length > 1 ? multipleChoiceActions = list : $emit('selected', list[0])"
-      class="hover-blur"
+      class="tilt-shaking-on-hover clickable circle action-type"
+      :icon="ICON_ACTION[type]"
     />
     <Modal
       :show="multipleChoiceActions.length > 1"
@@ -53,18 +54,17 @@ function isRed(type: ActionType): boolean {
 </template>
 
 <style scoped>
-.action-types {
-  align-items: stretch;
-  justify-content: center;
-}
 
-.action-types > * {
-  cursor: pointer;
-  transition: all 0.25s;
-}
+.action-type {
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 
-.action-types > *:hover {
-  transform: translateY(-0.5rem);
+  &:hover {
+    top: -.5rem;
+  }
 }
 
 .action-list {

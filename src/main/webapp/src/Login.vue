@@ -19,9 +19,14 @@ defineEmits<{
 </script>
 
 <template>
-  <div>
+  <div class="col center-items gap">
     <p>Username : <input type="text" v-model="username"/></p>
-    <button @click="$emit('connect')">Connect!</button>
+    <button
+      class="bordered rounded padded clickable"
+      @click="$emit('connect')"
+    >
+      Connect!
+    </button>
   </div>
 </template>
 

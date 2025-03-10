@@ -7,9 +7,9 @@ defineProps<{camp: Camp}>()
 
 <template>
 <div>
-  <h3>Nombre de constructions: {{camp.buildings.length}} / {{camp.maxBuildCount}}</h3>
+  <h3>Buildings count: {{camp.buildings.length}} / {{camp.maxBuildCount}}</h3>
   <div class="row">
-    <h3>Production totale : </h3>
+    <h3>Production : </h3>
     <ResourceBankView :bank="camp.production"/>
   </div>
 </div>

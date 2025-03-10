@@ -10,8 +10,10 @@ defineProps<{name: string}>()
 
 <style scoped>
 .card-name {
-  height: 2rem;
+  height: fit-content;
+  text-wrap: balance;
 }
+
 span {
   font-weight: bold;
 }
